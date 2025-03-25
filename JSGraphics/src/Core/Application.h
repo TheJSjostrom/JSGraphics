@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Window.h"
 
 namespace JSG {
 
@@ -11,6 +12,8 @@ namespace JSG {
 		void Run();
 
 	private:
+		Window m_Window;
+
 		bool m_Running = true;
 	};
 
