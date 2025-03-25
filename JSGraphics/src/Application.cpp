@@ -16,7 +16,7 @@ namespace JSG {
 	{
 		while (m_Running)
 		{
-			std::cout << "HELLO, WORLD!" << std::endl;
+			std::cout << "ROBIN - PILLAR'N!" << std::endl;
 		}
 	}
 
