@@ -1,0 +1,3 @@
+[submodule "JSGraphics/vendor/GLFW"]
+	path = JSGraphics/vendor/GLFW
+	url = https://github.com/TheCherno/glfw

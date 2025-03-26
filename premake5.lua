@@ -9,6 +9,11 @@ workspace "JSGraphics"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+IncludeDir = {}
+IncludeDir["GLFW"] = "JSGraphics/vendor/GLFW/include"
+
+include "JSGraphics/vendor/GLFW"
+
 project "JSGraphics"
 	location "JSGraphics"
 	kind "ConsoleApp"
@@ -25,11 +30,14 @@ project "JSGraphics"
 
 	includedirs
 	{
-		"%{prj.name}/src"
+		"%{prj.name}/src",
+		"%{IncludeDir.GLFW}"
 	}
 		
 	links
 	{
+		"GLFW",
+		"opengl32.lib"
 	}
 
 	filter "system:window"
@@ -41,6 +49,6 @@ project "JSGraphics"
 		defines "DEBUG" 
 		symbols "On"
 
-    filter "configurations:Release" 
-        defines "NDEBUG" 
-        optimize "On"
+	filter "configurations:Release" 
+		defines "NDEBUG" 
+		optimize "On"
