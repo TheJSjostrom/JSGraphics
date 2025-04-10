@@ -11,8 +11,12 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
 IncludeDir["GLFW"] = "JSGraphics/vendor/GLFW/include"
+IncludeDir["Glad"] = "JSGraphics/vendor/Glad/include"
+IncludeDir["ImGui"] = "JSGraphics/vendor/imgui"
 
 include "JSGraphics/vendor/GLFW"
+include "JSGraphics/vendor/Glad"
+include "JSGraphics/vendor/imgui"
 
 project "JSGraphics"
 	location "JSGraphics"
@@ -31,13 +35,22 @@ project "JSGraphics"
 	includedirs
 	{
 		"%{prj.name}/src",
-		"%{IncludeDir.GLFW}"
+		"%{IncludeDir.GLFW}",
+		"%{IncludeDir.Glad}",
+		"%{IncludeDir.ImGui}"
 	}
 		
 	links
 	{
 		"GLFW",
+		"Glad",
+		"ImGui",
 		"opengl32.lib"
+	}
+
+	defines
+	{
+		"GLFW_INCLUDE_NONE"
 	}
 
 	filter "system:window"

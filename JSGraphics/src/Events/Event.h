@@ -36,7 +36,6 @@ namespace JSG {
 
 #define  EVENT_CLASS_CATEGORY(category) virtual int GetCategoryFlags() const override { return category; }
 
-	// Event class
 	class Event
 	{
 		friend class EventDispatcher;
@@ -54,7 +53,6 @@ namespace JSG {
 		bool m_Handled = false;
 	};
 
-	// EventDispatcher class
 	class EventDispatcher
 	{
 		template<typename T>

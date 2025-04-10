@@ -24,13 +24,13 @@ namespace JSG {
 		void SetVSync(bool enabled);
 		bool IsVSync() { return m_Data.VSync; }
 
+		GLFWwindow* GetNativeWindow() const { return m_Window; }
 	private:
 		void Init();
 		void Shutdown();
-
 	private:
 		GLFWwindow* m_Window;
-
+		
 		struct WindowData
 		{
 			std::string Title = "JSGraphics";

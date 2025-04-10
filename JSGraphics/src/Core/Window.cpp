@@ -5,6 +5,9 @@
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
 
+#include "glad/glad.h"
+
+
 namespace JSG {
 
 
@@ -36,6 +39,11 @@ namespace JSG {
 
 		m_Window = glfwCreateWindow(m_Data.Width, m_Data.Height, m_Data.Title.c_str(), nullptr, nullptr);
 		glfwMakeContextCurrent(m_Window);
+
+		uint32_t status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+		if (!status) 
+			printf("Failed to initialize Glad\n");
+
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 		SetVSync(true);
 
@@ -52,14 +60,15 @@ namespace JSG {
 
 		glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window)
 		{
-			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			const WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
 			WindowCloseEvent event;
 			data.EventCallback(event);
 		});
 
 		glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 		{
-			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			const WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
 			switch (action)
 			{
@@ -86,7 +95,7 @@ namespace JSG {
 
 		glfwSetMouseButtonCallback(m_Window, [](GLFWwindow* window, int button, int action, int mods)
 		{
-			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			const WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 			switch (action)
 			{
 				case GLFW_PRESS:
@@ -106,7 +115,7 @@ namespace JSG {
 
 		glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xOffset, double yOffset)
 		{
-			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			const WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
 			MouseScrolledEvent event((float)xOffset, (float)yOffset);
 			data.EventCallback(event);
@@ -114,7 +123,7 @@ namespace JSG {
 
 		glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double xPos, double yPos)
 		{
-			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			const WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
 			MouseMovedEvent event((float)xPos, (float)yPos);
 			data.EventCallback(event);

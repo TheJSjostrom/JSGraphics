@@ -1,3 +1,6 @@
 [submodule "JSGraphics/vendor/GLFW"]
 	path = JSGraphics/vendor/GLFW
 	url = https://github.com/TheCherno/glfw
+[submodule "JSGraphics/vendor/imgui"]
+	path = JSGraphics/vendor/imgui
+	url = https://github.com/TheCherno/imgui
