@@ -25,7 +25,7 @@ namespace JSG {
 	private:
 		Window m_Window;
 		std::unique_ptr<ImGuiUI> m_ImGuiUI;
-
+		float f = 0.25f;
 		bool m_Running = true;
 	private:
 		static Application* s_Instance;

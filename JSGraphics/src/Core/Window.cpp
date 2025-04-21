@@ -30,17 +30,17 @@ namespace JSG {
 	{
 		printf("Creating Window: %s (%u, %u)", m_Data.Title.c_str(), m_Data.Width, m_Data.Height);
 
-		const bool IsGLFWInit = glfwInit();
-		if (!IsGLFWInit)
+		const bool isGLFWInit = glfwInit();
+		if (!isGLFWInit)
 		{
-			printf("\nCouldn't initialize glfw: %u", IsGLFWInit);
+			printf("\nCouldn't initialize glfw: %u", isGLFWInit);
 			glfwSetErrorCallback(GLFWErrorCallback);
 		}
 
 		m_Window = glfwCreateWindow(m_Data.Width, m_Data.Height, m_Data.Title.c_str(), nullptr, nullptr);
 		glfwMakeContextCurrent(m_Window);
 
-		uint32_t status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+		const uint32_t status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 		if (!status) 
 			printf("Failed to initialize Glad\n");
 
@@ -96,6 +96,7 @@ namespace JSG {
 		glfwSetMouseButtonCallback(m_Window, [](GLFWwindow* window, int button, int action, int mods)
 		{
 			const WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
 			switch (action)
 			{
 				case GLFW_PRESS:
