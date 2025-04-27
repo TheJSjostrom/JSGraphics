@@ -1,9 +1,10 @@
 #pragma once
+#include "Events/Event.h"
+
 #include <string>
 #include <stdint.h>
 #include <GLFW/glfw3.h>
 #include <Functional>
-#include "Events/Event.h"
 
 namespace JSG {
 
@@ -22,9 +23,10 @@ namespace JSG {
 
 		void SetEventCallback(const EventCallbackFn& callback) { m_Data.EventCallback = callback; }
 		void SetVSync(bool enabled);
+
 		bool IsVSync() { return m_Data.VSync; }
 
-		GLFWwindow* GetNativeWindow() const { return m_Window; }
+		GLFWwindow* GetNativeWindow() { return m_Window; }
 	private:
 		void Init();
 		void Shutdown();

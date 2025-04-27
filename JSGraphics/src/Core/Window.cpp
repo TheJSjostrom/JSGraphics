@@ -1,15 +1,14 @@
 #include <iostream>
 #include "Core/Window.h"
-#include "Application.h"
+#include "Core/Application.h"
+
 #include "Events/ApplicationEvent.h"
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
 
 #include "glad/glad.h"
 
-
 namespace JSG {
-
 
 	static void GLFWErrorCallback(int error, const char* description)
 	{

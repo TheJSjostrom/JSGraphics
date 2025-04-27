@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Sandbox2D.h"
 #include "Core/Window.h"
 #include "Events/ApplicationEvent.h"
 #include "ImGuiUI/ImGuiUI.h"
@@ -11,21 +12,21 @@ namespace JSG {
 		Application();
 		~Application();
 
+		void Run();
+
 		void OnEvent(Event& e);
 
-		void Run();
-	public:
 		Window& GetWindow() { return m_Window; }
+	public:
 		static Application* Get() { return s_Instance; }
 	private:
-		void OnUpdate();
-		void OnRender();
-
-		bool OnWindowClose(WindowCloseEvent& e);
+		bool OnWindowClose(const WindowCloseEvent& e);
 	private:
 		Window m_Window;
-		std::unique_ptr<ImGuiUI> m_ImGuiUI;
-		float f = 0.25f;
+		ImGuiUI m_ImGuiUI;
+		Sandbox2D m_Sandbox;
+
+		bool m_Minimized = false;
 		bool m_Running = true;
 	private:
 		static Application* s_Instance;

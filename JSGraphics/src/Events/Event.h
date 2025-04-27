@@ -1,8 +1,8 @@
 #pragma once
+#include "Core/Core.h"
 
 #include <string>
 #include <functional>
-#include "Core/Core.h"
 
 namespace JSG {
 
@@ -64,7 +64,7 @@ namespace JSG {
 		}
 
 		template<typename T>
-		bool Dispatch(EventFn<T> func)
+		bool Dispatch(const EventFn<T>& func)
 		{
 			if (m_Event.GetEventType() == T::GetStaticType())
 			{

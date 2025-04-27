@@ -1,17 +1,16 @@
 #include "ImGuiUI/ImGuiUI.h"
+
+#include "Core/Application.h"
+#include "Core/Core.h"
+
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
 #include <glad/glad.h>
 
-#include "Core/Application.h"
-#include "Core/Core.h"
-#include "Events/KeyEvent.h"
-
-
 namespace JSG {
 
-	ImGuiUI::ImGuiUI()
+	void ImGuiUI::Init()
 	{
 		// Setup Dear ImGui context
 		IMGUI_CHECKVERSION();
@@ -25,21 +24,16 @@ namespace JSG {
 		ImGui::StyleColorsDark();
 
 		// Setup Platform/Renderer backends
-		Application& app = *Application::Get();
-		ImGui_ImplGlfw_InitForOpenGL(app.GetWindow().GetNativeWindow(), true);
+		Application* app = Application::Get();
+		ImGui_ImplGlfw_InitForOpenGL(app->GetWindow().GetNativeWindow(), true);
 		ImGui_ImplOpenGL3_Init();
 	}
 
-	ImGuiUI::~ImGuiUI()
+	void ImGuiUI::Shutdown()
 	{
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
-	}
-
-	void ImGuiUI::OnRender()
-	{
-		ImGui::ShowDemoWindow(); 
 	}
 
 	void ImGuiUI::OnEvent(Event& e)

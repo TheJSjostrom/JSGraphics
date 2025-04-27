@@ -1,8 +1,8 @@
 #pragma once
+#include "Events/Event.h"
 
 #include <string>
 #include <sstream>
-#include "Events/Event.h"
 
 namespace JSG {
 

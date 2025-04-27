@@ -1,10 +1,11 @@
-#include <iostream>
-
-#include "glad/glad.h"
 #include "Core/Application.h"
 #include "Core/Core.h"
+
 #include "Events/Event.h"
 #include "Events/ApplicationEvent.h"
+
+#include <iostream>
+#include "glad/glad.h"
 
 namespace JSG {
 
@@ -14,12 +15,31 @@ namespace JSG {
 	{
 		s_Instance = this;
 		m_Window.SetEventCallback(HZ_BIND_EVENT_FN(Application::OnEvent));
-		m_ImGuiUI = std::make_unique<ImGuiUI>();
+		m_ImGuiUI.Init();
 	}
 
 	Application::~Application()
 	{
+		m_ImGuiUI.Shutdown();
 	}
+
+	void Application::Run()
+	{
+		while (m_Running)
+		{
+		//	glClearColor(1.0f, 0.25f, 0.25f, 1.0f);
+		//	glClear(GL_COLOR_BUFFER_BIT);
+
+			m_Sandbox.OnUpdate();
+			m_Sandbox.OnRender();
+
+			m_ImGuiUI.Begin();
+			m_Sandbox.OnImGuiRender();
+			m_ImGuiUI.End();
+
+			m_Window.OnUpdate();
+		}
+	}	
 
 	void Application::OnEvent(Event& e)
 	{
@@ -27,37 +47,9 @@ namespace JSG {
 
 		EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(HZ_BIND_EVENT_FN(Application::OnWindowClose));
-
-		m_ImGuiUI->OnEvent(e);
 	}
 
-	void Application::Run()
-	{
-		while (m_Running)
-		{
-			OnRender();
-			OnUpdate();
-
-			m_Window.OnUpdate();
-		}
-	}
-
-
-	void Application::OnUpdate()
-	{
-	}
-
-	void Application::OnRender()
-	{
-		glClearColor(1.0f, 0.25f, 0.25f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		m_ImGuiUI->Begin();
-		m_ImGuiUI->OnRender();
-		m_ImGuiUI->End();
-	}
-
-	bool Application::OnWindowClose(WindowCloseEvent& e)
+	bool Application::OnWindowClose(const WindowCloseEvent& e)
 	{
 		m_Running = false;
 		return true;

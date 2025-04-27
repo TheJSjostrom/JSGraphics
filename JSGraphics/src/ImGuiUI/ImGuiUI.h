@@ -1,18 +1,17 @@
 #pragma once
 #include "Events/Event.h"
-#include "Events/MouseEvent.h"
-#include "Events/ApplicationEvent.h"
-#include "Events/KeyEvent.h"
 
 namespace JSG {
 
 	class ImGuiUI
 	{
 	public:
-		ImGuiUI();
-		~ImGuiUI();
+		ImGuiUI() = default;
+		~ImGuiUI() = default;
 
-		void OnRender();
+		void Init();
+		void Shutdown();
+
 		void OnEvent(Event& e);
 
 		void Begin();
