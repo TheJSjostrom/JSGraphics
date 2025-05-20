@@ -21,12 +21,14 @@ namespace JSG {
 		uint32_t GetWidth() const { return m_Data.Width; }
 		uint32_t GetHeight() const { return m_Data.Width; }
 
+		const std::string& GetTitle() const { return m_Data.Title; }
+
 		void SetEventCallback(const EventCallbackFn& callback) { m_Data.EventCallback = callback; }
 		void SetVSync(bool enabled);
 
-		bool IsVSync() { return m_Data.VSync; }
+		bool IsVSync() const { return m_Data.VSync; }
 
-		GLFWwindow* GetNativeWindow() { return m_Window; }
+		GLFWwindow* GetNativeWindow() const { return m_Window; }
 	private:
 		void Init();
 		void Shutdown();

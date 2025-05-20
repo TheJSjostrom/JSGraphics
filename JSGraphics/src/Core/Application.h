@@ -26,7 +26,6 @@ namespace JSG {
 		ImGuiUI m_ImGuiUI;
 		Sandbox2D m_Sandbox;
 
-		bool m_Minimized = false;
 		bool m_Running = true;
 	private:
 		static Application* s_Instance;

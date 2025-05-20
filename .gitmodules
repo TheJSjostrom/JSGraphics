@@ -4,3 +4,6 @@
 [submodule "JSGraphics/vendor/imgui"]
 	path = JSGraphics/vendor/imgui
 	url = https://github.com/TheCherno/imgui
+[submodule "JSGraphics/vendor/glm"]
+	path = JSGraphics/vendor/glm
+	url = https://github.com/g-truc/glm

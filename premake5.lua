@@ -13,6 +13,7 @@ IncludeDir = {}
 IncludeDir["GLFW"] = "JSGraphics/vendor/GLFW/include"
 IncludeDir["Glad"] = "JSGraphics/vendor/Glad/include"
 IncludeDir["ImGui"] = "JSGraphics/vendor/imgui"
+IncludeDir["glm"] = "JSGraphics/vendor/glm"
 
 include "JSGraphics/vendor/GLFW"
 include "JSGraphics/vendor/Glad"
@@ -37,7 +38,8 @@ project "JSGraphics"
 		"%{prj.name}/src",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.Glad}",
-		"%{IncludeDir.ImGui}"
+		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.glm}"
 	}
 		
 	links

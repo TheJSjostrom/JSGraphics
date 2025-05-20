@@ -1,12 +1,9 @@
 #include "ImGuiUI/ImGuiUI.h"
 
 #include "Core/Application.h"
-#include "Core/Core.h"
 
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
-
-#include <glad/glad.h>
 
 namespace JSG {
 
@@ -34,10 +31,6 @@ namespace JSG {
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
-	}
-
-	void ImGuiUI::OnEvent(Event& e)
-	{
 	}
 
 	void ImGuiUI::Begin()

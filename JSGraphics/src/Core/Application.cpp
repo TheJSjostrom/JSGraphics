@@ -43,10 +43,12 @@ namespace JSG {
 
 	void Application::OnEvent(Event& e)
 	{
-		std::cout << e << std::endl;
+		//std::cout << e << std::endl;
 
 		EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(HZ_BIND_EVENT_FN(Application::OnWindowClose));
+
+		m_Sandbox.OnEvent(e);
 	}
 
 	bool Application::OnWindowClose(const WindowCloseEvent& e)
