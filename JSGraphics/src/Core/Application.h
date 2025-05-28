@@ -1,7 +1,9 @@
 #pragma once
 #include "Core/Sandbox2D.h"
 #include "Core/Window.h"
+
 #include "Events/ApplicationEvent.h"
+
 #include "ImGuiUI/ImGuiUI.h"
 
 namespace JSG {

@@ -18,8 +18,6 @@ namespace JSG {
 
 		void OnEvent(Event& e);
 	private:
-		bool OnMouseButtonPressed(const MouseButtonPressedEvent& e);
-	private:
 		float m_GValue = 0.25f;
 		float m_Angle = 0.0f;
 		float m_Length = 0.0f;

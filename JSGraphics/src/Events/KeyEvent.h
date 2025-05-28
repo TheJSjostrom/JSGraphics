@@ -5,7 +5,6 @@
 
 namespace JSG {
 
-	// KeyEvent class
 	class KeyEvent : public Event
 	{
 	public:
@@ -19,7 +18,6 @@ namespace JSG {
 		int m_KeyCode;
 	};
 
-	// KeyPressedEvent class
 	class KeyPressedEvent : public KeyEvent
 	{
 	public:
@@ -40,7 +38,6 @@ namespace JSG {
 		int m_RepeatCount;
 	};
 
-	// KeyReleasedEvent class
 	class KeyReleasedEvent : public KeyEvent
 	{
 	public:
@@ -55,6 +52,23 @@ namespace JSG {
 		}
 
 		EVENT_CLASS_TYPE(KeyReleased)
+	};
+
+	class KeyTypedEvent : public KeyEvent
+	{
+	public:
+		KeyTypedEvent(uint32_t keycode)
+			: KeyEvent(keycode) {
+		}
+
+		std::string ToString() const override
+		{
+			std::stringstream ss;
+			ss << "KeyTypedEvent: " << m_KeyCode;
+			return ss.str();
+		}
+
+		EVENT_CLASS_TYPE(KeyTyped)
 	};
 }
 
