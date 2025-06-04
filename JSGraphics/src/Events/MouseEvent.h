@@ -5,7 +5,6 @@
 
 namespace JSG {
 
-	// MouseMovedEvent class
 	class MouseMovedEvent : public Event
 	{
 	public:
@@ -29,7 +28,6 @@ namespace JSG {
 		float m_MouseX, m_MouseY;
 	};
 
-	// MouseScrolledEvent class
 	class MouseScrolledEvent : public Event
 	{
 	public:
@@ -53,7 +51,6 @@ namespace JSG {
 		float m_XOffset, m_YOffset;
 	};
 
-	// MouseButtonEvent class
 	class MouseButtonEvent : public Event
 	{
 	public:
@@ -67,7 +64,6 @@ namespace JSG {
 		int m_Button;
 	};
 
-	// MouseButtonPressedEvent class
 	class MouseButtonPressedEvent : public MouseButtonEvent
 	{
 	public:
@@ -84,7 +80,6 @@ namespace JSG {
 		EVENT_CLASS_TYPE(MouseButtonPressed)
 	};
 
-	// MouseButtonReleasedEvent class
 	class MouseButtonReleasedEvent : public MouseButtonEvent
 	{
 	public:

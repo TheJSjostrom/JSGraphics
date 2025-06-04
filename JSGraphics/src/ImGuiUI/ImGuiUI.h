@@ -5,11 +5,11 @@ namespace JSG {
 	class ImGuiUI
 	{
 	public:
-		void Init();
-		void Shutdown();
+		static void Init();
+		static void Shutdown();
 
-		void Begin();
-		void End();
+		static void Begin();
+		static void End();
 	};
 
 }

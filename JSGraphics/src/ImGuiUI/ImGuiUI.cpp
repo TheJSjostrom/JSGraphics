@@ -21,8 +21,8 @@ namespace JSG {
 		ImGui::StyleColorsDark();
 
 		// Setup Platform/Renderer backends
-		Application* app = Application::Get();
-		ImGui_ImplGlfw_InitForOpenGL(app->GetWindow().GetNativeWindow(), true);
+		Application& app = *Application::Get();
+		ImGui_ImplGlfw_InitForOpenGL(app.GetWindow().GetNativeWindow(), true);
 		ImGui_ImplOpenGL3_Init();
 	}
 

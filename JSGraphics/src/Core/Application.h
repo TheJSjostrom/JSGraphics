@@ -25,7 +25,6 @@ namespace JSG {
 		bool OnWindowClose(const WindowCloseEvent& e);
 	private:
 		Window m_Window;
-		ImGuiUI m_ImGuiUI;
 		Sandbox2D m_Sandbox;
 
 		bool m_Running = true;
