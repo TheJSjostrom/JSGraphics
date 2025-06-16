@@ -12,10 +12,76 @@
 
 #include "glm/gtc/matrix_transform.hpp"
 #include <iostream>
+
 namespace JSG {
 
 	Sandbox2D::Sandbox2D()
 	{
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glCreateVertexArrays(1, &m_VertexArray);
+		glBindVertexArray(m_VertexArray);
+
+		glCreateBuffers(1, &m_VertexBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer);
+
+		float vertices[6 * 6] = {
+		   -0.5f, -0.5f, 0.0f, -1.0f, -1.0f, 0.0f,
+			0.5f, -0.5f, 0.0f,  1.0f, -1.0f, 0.0f,
+			0.5f,  0.5f, 0.0f,  1.0f,  1.0f, 0.0f,
+
+			0.5f,  0.5f, 0.0f,  1.0f,  1.0f, 0.0f,
+		   -0.5f,  0.5f, 0.0f, -1.0f,  1.0f, 0.0f,
+		   -0.5f, -0.5f, 0.0f, -1.0f, -1.0f, 0.0f
+		};
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), (void*)vertices, GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	
+		std::string vertexSrc = R"(
+			#version 330 core
+			
+			layout(location = 0) in vec3 a_Position;
+			layout(location = 1) in vec3 a_LocalPosition;
+			
+			out vec3 FragPos;
+			
+			uniform mat4 u_Proj;
+
+			void main()
+			{
+				FragPos = a_LocalPosition;
+				gl_Position = u_Proj * vec4(a_Position, 1.0);
+			}
+		)";
+
+		std::string fragSrc = R"(
+			#version 330 core
+			
+			layout(location = 0) out vec4 color;
+
+			in vec3 FragPos;
+
+			uniform float x;
+			uniform vec3 u_Color;
+
+			void main()
+			{ 
+				float FragPosLength = sqrt(FragPos.x * FragPos.x + FragPos.y * FragPos.y);
+				color = vec4(1.0, 0.0, 0.0, 0.0);
+
+				if (FragPosLength < 1.0)
+					color = vec4(u_Color, 1.0);
+			}
+		)";
+
+		m_Shader.Init(vertexSrc, fragSrc);
+		m_Shader.Bind();
 	}
 
 	Sandbox2D::~Sandbox2D()
@@ -24,11 +90,32 @@ namespace JSG {
 
 	void Sandbox2D::OnUpdate()
 	{
-		// Dot Product math
-		glm::vec2 V = { m_XPos, m_YPos };
-		glm::vec2 V2 = { -0.5f, 0.5f };
+		m_Shader.SetFloat3("u_Color", m_Color);
+ 
+		// Aspect Ratio
+		Application& app = *Application::Get();
+		m_AspectRatio = app.GetWindow().GetWidth() / static_cast<float>(app.GetWindow().GetHeight());
+		m_Shader.SetMat4("u_Proj", glm::ortho(-m_AspectRatio, m_AspectRatio, -1.0f, 1.0f, -1.0f, 1.0f));
 
-		m_DotProduct =  V.x * V2.x + V.y * V2.y;
+		// Dot Product math
+		if (Input::IsKeyPressed(GLFW_KEY_A) && Input::IsKeyPressed(GLFW_KEY_LEFT_CONTROL))
+		{
+			m_VAngle += 180 * (1 / 60.0f);
+		}
+		else if (Input::IsKeyPressed(GLFW_KEY_D) && Input::IsKeyPressed(GLFW_KEY_LEFT_CONTROL))
+		{
+			m_VAngle -= 180 * (1 / 60.0f);
+		}
+
+		m_V = { glm::cos(glm::radians(m_VAngle)), glm::sin(glm::radians(m_VAngle)) };
+		m_V2 = { glm::cos(glm::radians(m_V2Angle)) * 5.09901953f, glm::sin(glm::radians(m_V2Angle)) * 5.09901953f };
+
+		float LengthVector = glm::sqrt(m_V.x * m_V.x + m_V.y * m_V.y);
+	    float LengthVector2 = glm::sqrt(m_V2.x * m_V2.x + m_V2.y * m_V2.y);
+		float x = m_V.x * m_V2.x;
+		float y = m_V.y * m_V2.y;
+		m_DotProduct = m_V.x * m_V2.x + m_V.y * m_V2.y;
+		m_DotProduct2 = glm::cos(glm::radians(m_VAngle - m_V2Angle)) * 5.09901953f * glm::sqrt(m_V.x * m_V.x + m_V.y * m_V.y);
 
 		// Rotation math
 		glm::vec2 iVector = { glm::cos(glm::radians(m_Angle)), glm::sin(glm::radians(m_Angle)) };
@@ -65,17 +152,21 @@ namespace JSG {
 
 	void Sandbox2D::OnRender()
 	{
-		glClearColor(1.0f, m_GValue, 0.25f, 1.0f);
+		glClearColor(m_BColor.x, m_BColor.y, m_BColor.z, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		glBindVertexArray(m_VertexArray);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 	}
 
 	void Sandbox2D::OnImGuiRender()
 	{
-		//ImGui::ShowDemoWindow();
-
+		ImGui::ShowDemoWindow();
 		ImGui::Begin("Color");
 		ImGui::TextColored(ImVec4(1, 1, 0, 1), "Color");
-		ImGui::SliderFloat("Background Color", &m_GValue, 0.0f, 1.0f);
+		ImGui::ColorEdit4("Background Color", (float*)&m_BColor);
+		ImGui::ColorEdit4("Circle Color", (float*)&m_Color);
+		ImGui::Text("Aspect Ratio %f", m_AspectRatio);
 		ImGui::End();
 
 		ImGui::Begin("Rotation");
@@ -93,9 +184,12 @@ namespace JSG {
 
 		ImGui::Begin("Dot Product");
 		ImGui::TextColored(ImVec4(1, 1, 0, 1), "Dot Product");
-		ImGui::SliderFloat("Change X Position", &m_XPos, -5.0f, 5.0f);
-		ImGui::SliderFloat("Change Y Position", &m_YPos, -5.0f, 5.0f);
+		ImGui::SliderFloat("Change VAngle", &m_VAngle, 0.0f, 360.0f);
+		ImGui::SliderFloat("Change V2Angle", &m_V2Angle, 0.0f, 360.0f);
 		ImGui::Text("Dot Product: %f", m_DotProduct);
+		ImGui::Text("Dot Product2: %f", m_DotProduct2);
+		ImGui::Text("Vector: %f, %f", m_V.x, m_V.y);
+		ImGui::Text("Vector2: %f, %f", m_V2.x, m_V2.y);
 		ImGui::End();
 	}
 

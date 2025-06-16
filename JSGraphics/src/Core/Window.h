@@ -19,7 +19,7 @@ namespace JSG {
 		void OnUpdate();
 
 		uint32_t GetWidth() const { return m_Data.Width; }
-		uint32_t GetHeight() const { return m_Data.Width; }
+		uint32_t GetHeight() const { return m_Data.Height; }
 
 		const std::string& GetTitle() const { return m_Data.Title; }
 
