@@ -4,11 +4,7 @@
 #include <glm/gtc/type_ptr.hpp>
 namespace JSG {
 
-	Shader::Shader()
-	{
-	}
-
-	void Shader::Init(const std::string& vertexScr, const std::string& fragSrc)
+	Shader::Shader(const std::string& vertexScr, const std::string& fragSrc)
 	{
 		// Create an empty vertex shader handle
 		GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -114,14 +110,9 @@ namespace JSG {
 		glDetachShader(m_ShaderID, fragmentShader);
 	}
 
-	void Shader::Shutdown()
-	{
-		glDeleteProgram(m_ShaderID);
-	}
-
 	Shader::~Shader()
 	{
-		Shutdown();
+		glDeleteProgram(m_ShaderID);
 	}
 
 	void Shader::Bind() const

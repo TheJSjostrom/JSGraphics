@@ -12,6 +12,7 @@
 
 #include "glm/gtc/matrix_transform.hpp"
 #include <iostream>
+#include <algorithm>
 
 namespace JSG {
 
@@ -26,62 +27,75 @@ namespace JSG {
 		glCreateBuffers(1, &m_VertexBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer);
 
-		float vertices[6 * 6] = {
+		float SquareVertices[4 * 6] = {
+     	// Vertex Position     Local Position
 		   -0.5f, -0.5f, 0.0f, -1.0f, -1.0f, 0.0f,
 			0.5f, -0.5f, 0.0f,  1.0f, -1.0f, 0.0f,
 			0.5f,  0.5f, 0.0f,  1.0f,  1.0f, 0.0f,
-
-			0.5f,  0.5f, 0.0f,  1.0f,  1.0f, 0.0f,
-		   -0.5f,  0.5f, 0.0f, -1.0f,  1.0f, 0.0f,
-		   -0.5f, -0.5f, 0.0f, -1.0f, -1.0f, 0.0f
+		   -0.5f,  0.5f, 0.0f, -1.0f,  1.0f, 0.0f
 		};
 
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), (void*)vertices, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(SquareVertices), reinterpret_cast<void*>(SquareVertices), GL_STATIC_DRAW);
 
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-	
-		std::string vertexSrc = R"(
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+		
+		glCreateBuffers(1, &m_IndexBuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer);
+		
+		uint32_t indices[6] = { 0, 1, 2, 2, 3, 0 };
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), (void*)indices, GL_STATIC_DRAW);
+
+		const std::string vertexSrc = R"(
 			#version 330 core
 			
 			layout(location = 0) in vec3 a_Position;
 			layout(location = 1) in vec3 a_LocalPosition;
 			
 			out vec3 FragPos;
-			
-			uniform mat4 u_Proj;
 
+			uniform vec3 u_Position;
+			uniform mat4 u_Proj;
+			uniform mat4 u_View;
+			
 			void main()
 			{
 				FragPos = a_LocalPosition;
-				gl_Position = u_Proj * vec4(a_Position, 1.0);
+				gl_Position = u_Proj * u_View * vec4(a_Position.x + u_Position.x, a_Position.y + u_Position.y, 0.0, 1.0);
 			}
 		)";
 
-		std::string fragSrc = R"(
+		const std::string fragSrc = R"(
 			#version 330 core
 			
 			layout(location = 0) out vec4 color;
 
 			in vec3 FragPos;
 
-			uniform float x;
 			uniform vec3 u_Color;
 
 			void main()
 			{ 
 				float FragPosLength = sqrt(FragPos.x * FragPos.x + FragPos.y * FragPos.y);
-				color = vec4(1.0, 0.0, 0.0, 0.0);
-
+				
 				if (FragPosLength < 1.0)
 					color = vec4(u_Color, 1.0);
 			}
 		)";
 
-		m_Shader.Init(vertexSrc, fragSrc);
-		m_Shader.Bind();
+		m_Shader = std::make_unique<Shader>(vertexSrc, fragSrc);
+		m_Shader->Bind();
+
+		for (uint32_t i = 0; i < 100; i++)
+		{
+			m_Number.push_back(rand() % 100);
+		}
+		for (uint32_t i = 0; i < 100; i++)
+		{
+			m_Number2.push_back(rand() % 100);
+		}
 	}
 
 	Sandbox2D::~Sandbox2D()
@@ -90,14 +104,62 @@ namespace JSG {
 
 	void Sandbox2D::OnUpdate()
 	{
-		m_Shader.SetFloat3("u_Color", m_Color);
+		m_Shader->SetFloat3("u_Color", m_CircleColor);
  
 		// Aspect Ratio
 		Application& app = *Application::Get();
 		m_AspectRatio = app.GetWindow().GetWidth() / static_cast<float>(app.GetWindow().GetHeight());
-		m_Shader.SetMat4("u_Proj", glm::ortho(-m_AspectRatio, m_AspectRatio, -1.0f, 1.0f, -1.0f, 1.0f));
+
+		// Shader
+		m_Shader->SetMat4("u_Proj", glm::ortho(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel, -1.0f, 1.0f));
+
+		glm::vec3 backwardDirection = { 0.0f, 0.0f, 1.0f };
+		glm::vec3 leftDirection = glm::normalize(glm::cross(backwardDirection, m_ForwardDirection));
+
+		m_ForwardDirection.x = glm::cos(glm::radians(m_Rotation + 90.0f));
+		m_ForwardDirection.y = glm::sin(glm::radians(m_Rotation + 90.0f));
+		m_ForwardDirection.z = 0.0f;
+		m_ForwardDirection = glm::normalize(m_ForwardDirection);
+
+		if (Input::IsKeyPressed(GLFW_KEY_W)) 
+		{
+			m_Position.x += m_ForwardDirection.x * 10.0f * 1 / static_cast<float>(60);
+			m_Position.y += m_ForwardDirection.y * 10.0f *  1 / static_cast<float>(60);
+		}
+		else if (Input::IsKeyPressed(GLFW_KEY_S))
+		{
+			m_Position.x -= m_ForwardDirection.x * 10.0f * 1 / static_cast<float>(60);
+			m_Position.y -= m_ForwardDirection.y * 10.0f *  1 / static_cast<float>(60);
+		}
+
+		if (Input::IsKeyPressed(GLFW_KEY_A))
+		{
+			m_Position.x += leftDirection.x * 10.0f * 1 / static_cast<float>(60);
+			m_Position.y += leftDirection.y * 10.0f * 1 / static_cast<float>(60);
+		}
+		else if (Input::IsKeyPressed(GLFW_KEY_D))
+		{
+			m_Position.x -= leftDirection.x * 10.0f * 1 / static_cast<float>(60);
+			m_Position.y -= leftDirection.y * 10.0f * 1 / static_cast<float>(60);
+		}
+
+		if (Input::IsKeyPressed(GLFW_KEY_Q))
+		{
+			m_Rotation += 180.0f * 1 / static_cast<float>(60);
+		}
+		else if (Input::IsKeyPressed(GLFW_KEY_E))
+		{
+			m_Rotation -= 180.0f * 1 / static_cast<float>(60);
+		}
+
+		glm::mat4 viewMatrix = glm::translate(glm::mat4(1), m_Position) * glm::rotate(glm::mat4(1.0f), glm::radians(m_Rotation), glm::vec3(0, 0, 1));
+		viewMatrix = glm::inverse(viewMatrix);
+
+		m_Shader->SetMat4("u_View", viewMatrix);
+
 
 		// Dot Product math
+		/*
 		if (Input::IsKeyPressed(GLFW_KEY_A) && Input::IsKeyPressed(GLFW_KEY_LEFT_CONTROL))
 		{
 			m_VAngle += 180 * (1 / 60.0f);
@@ -106,7 +168,7 @@ namespace JSG {
 		{
 			m_VAngle -= 180 * (1 / 60.0f);
 		}
-
+		*/
 		m_V = { glm::cos(glm::radians(m_VAngle)), glm::sin(glm::radians(m_VAngle)) };
 		m_V2 = { glm::cos(glm::radians(m_V2Angle)) * 5.09901953f, glm::sin(glm::radians(m_V2Angle)) * 5.09901953f };
 
@@ -156,20 +218,41 @@ namespace JSG {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glBindVertexArray(m_VertexArray);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		for (int i = 0; i < m_Number.size(); i++)
+		{
+			for (int y = 0; y < m_Number2.size(); y++)
+			{
+				m_Shader->SetFloat3("u_Position", glm::vec3(m_Number[i] - m_Number2[y], m_Number2[y] + m_Number[i], 0.0f));
+				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+			}
+		}
 	}
 
 	void Sandbox2D::OnImGuiRender()
 	{
-		ImGui::ShowDemoWindow();
-		ImGui::Begin("Color");
-		ImGui::TextColored(ImVec4(1, 1, 0, 1), "Color");
-		ImGui::ColorEdit4("Background Color", (float*)&m_BColor);
-		ImGui::ColorEdit4("Circle Color", (float*)&m_Color);
-		ImGui::Text("Aspect Ratio %f", m_AspectRatio);
+		Application* app = Application::Get();
+
+		//ImGui::ShowDemoWindow();
+		ImGui::Begin("Camera");
+		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "CAMERA CONTROLS");
+		ImGui::Text("Move the camera around: WASD");
+		ImGui::Text("Zoom in and out: Mouse Scroll Wheel");
+		ImGui::Text("Rotate the camera: QE");
 		ImGui::End();
 
-		ImGui::Begin("Rotation");
+		ImGui::Begin("Settings");
+		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "COLOR");
+		ImGui::ColorEdit4("Background Color", reinterpret_cast<float*>(&m_BColor));
+		ImGui::ColorEdit4("Circle Color", reinterpret_cast<float*>(&m_CircleColor));
+		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "Aspect Ratio");
+		ImGui::Text("Window Height: %f", static_cast<float>(app->GetWindow().GetHeight()));
+		ImGui::Text("Wondow Width: %f", static_cast<float>(app->GetWindow().GetWidth()));
+		ImGui::Text("Window Aspect Ratio: %f", m_AspectRatio);
+		ImGui::End();
+
+		ImGui::Begin("Math");
+		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "ROTATION");
 		ImGui::SliderFloat("Change Angle", &m_Angle, 0.0f, 360.0f);
 		ImGui::TextColored(ImVec4(1, 1, 0, 1), "IVector");
 		ImGui::Text("IVector X: %f", m_IVector.x);
@@ -180,10 +263,9 @@ namespace JSG {
 		ImGui::Text("TransformedPos VectorX: %f", m_PosUV.x);
 		ImGui::Text("TransformedPos VectorY: %f", m_PosUV.y);
 		ImGui::Text("IVector Angle: %f", m_Angle);
-		ImGui::End();
 
-		ImGui::Begin("Dot Product");
-		ImGui::TextColored(ImVec4(1, 1, 0, 1), "Dot Product");
+		ImGui::Text(" ");
+		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "DOT PRODUCT");
 		ImGui::SliderFloat("Change VAngle", &m_VAngle, 0.0f, 360.0f);
 		ImGui::SliderFloat("Change V2Angle", &m_V2Angle, 0.0f, 360.0f);
 		ImGui::Text("Dot Product: %f", m_DotProduct);
@@ -195,6 +277,14 @@ namespace JSG {
 
 	void Sandbox2D::OnEvent(Event& e)
 	{
+		EventDispatcher dispatcher(e);
+		dispatcher.Dispatch<MouseScrolledEvent>(HZ_BIND_EVENT_FN(Sandbox2D::OnMouseScrolled));
 	}
 
+	bool Sandbox2D::OnMouseScrolled(MouseScrolledEvent& e)
+	{
+		m_ZoomLevel += e.GetYOffset() * 0.05f;
+		m_ZoomLevel = std::max(m_ZoomLevel, 0.30f);
+		return false;
+	}
 }

@@ -6,7 +6,7 @@
 
 #include "Core/Sandbox.h"
 #include "Renderer/Shader.h"
-
+#include <vector>
 namespace JSG {
 
 	class Sandbox2D : public Sandbox
@@ -19,16 +19,29 @@ namespace JSG {
 		virtual void OnRender() override;
 		virtual void OnImGuiRender() override;
 		virtual void OnEvent(Event& e) override;
+
 	private:
-		glm::vec3 m_Color = { 0.0f, 0.0f, 0.0f };
-		glm::vec3 m_BColor = { 1.0f, 0.0f, 0.0f };
+		bool OnMouseScrolled(MouseScrolledEvent& e);
+	private:
+
+		glm::vec3 m_CircleColor = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 m_BColor = { 0.009f, 0.018f, 0.039f };
+		// Shader Data
 		uint32_t m_VertexArray;
 		uint32_t m_VertexBuffer;
-		Shader m_Shader;
+		uint32_t m_IndexBuffer;
+		std::unique_ptr<Shader> m_Shader;
+		glm::vec3 m_Position = { 0.0f, 0.0f, 0.0f };
+		float m_Rotation = 0.0f;
+		glm::vec3 m_ForwardDirection = { 0.0f, 0.0f, 0.0f };
+		std::vector<int> m_Number;
+		std::vector<int> m_Number2;
 
+		float m_ZoomLevel = 1.0f;
 		float m_AspectRatio = 0.0f;
 		float m_GValue = 0.25f;
 
+		// Math Data
 		glm::vec2 m_PosUV = { 0.0f, 0.0f };
 		glm::vec2 m_IVector = { 0.0f, 0.0f };
 
