@@ -30,7 +30,11 @@ namespace JSG {
 	{
 		while (m_Running)
 		{
-			m_Sandbox2D->OnUpdate();
+			float time = glfwGetTime();
+			float timestep = time - m_LastFrameTime;
+			m_LastFrameTime = time;
+
+			m_Sandbox2D->OnUpdate(timestep);
 			m_Sandbox2D->OnRender();
 
 			ImGuiUI::Begin();

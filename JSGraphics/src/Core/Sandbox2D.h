@@ -7,6 +7,8 @@
 #include "Core/Sandbox.h"
 #include "Renderer/Shader.h"
 #include <vector>
+#include "Renderer/Buffer.h"
+
 namespace JSG {
 
 	class Sandbox2D : public Sandbox
@@ -15,7 +17,7 @@ namespace JSG {
 		Sandbox2D();
 		virtual ~Sandbox2D() override;
 
-		virtual void OnUpdate() override;
+		virtual void OnUpdate(float ts) override;
 		virtual void OnRender() override;
 		virtual void OnImGuiRender() override;
 		virtual void OnEvent(Event& e) override;
@@ -23,17 +25,25 @@ namespace JSG {
 	private:
 		bool OnMouseScrolled(MouseScrolledEvent& e);
 	private:
-
 		glm::vec3 m_CircleColor = { 0.0f, 0.0f, 0.0f };
 		glm::vec3 m_BColor = { 0.009f, 0.018f, 0.039f };
 		// Shader Data
 		uint32_t m_VertexArray;
-		uint32_t m_VertexBuffer;
-		uint32_t m_IndexBuffer;
+		std::unique_ptr<VertexBuffer> m_VertexBuffer;
+		std::unique_ptr<IndexBuffer> m_IndexBuffer;
 		std::unique_ptr<Shader> m_Shader;
-		glm::vec3 m_Position = { 0.0f, 0.0f, 0.0f };
-		float m_Rotation = 0.0f;
+
+		uint32_t m_CircleVertexArray;
+		std::unique_ptr<VertexBuffer> m_CircleVertexBuffer;
+		std::unique_ptr<IndexBuffer> m_CircleIndexBuffer;
+		std::unique_ptr<Shader> m_CircleShader;
+
+		glm::vec3 m_CameraPosition = { 0.0f, 0.0f, 0.0f };
+		float m_CameraRotation = 0.0f;
+		float m_PlayerRotation = 0.0f;
+		glm::vec3 m_PlayerPosition = { 0.0f, 0.0f, 0.0f };
 		glm::vec3 m_ForwardDirection = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 m_PlayerColor = { 1.0f, 0.0f, 0.0f };
 		std::vector<int> m_Number;
 		std::vector<int> m_Number2;
 

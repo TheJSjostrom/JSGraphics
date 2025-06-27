@@ -7,12 +7,13 @@
 #include "Events/MouseEvent.h"
 
 #include "glad/glad.h"
+#include <print>
 
 namespace JSG {
 
 	static void GLFWErrorCallback(int error, const char* description)
 	{
-		printf("\nError code (%u) - description: %s", error, description);
+		std::println("Error code {} - description: {}", error, description);
 	}
 
 	Window::Window()
@@ -27,12 +28,12 @@ namespace JSG {
 
 	void Window::Init()
 	{
-		printf("Creating Window: %s (%u, %u)", m_Data.Title.c_str(), m_Data.Width, m_Data.Height);
+		std::println("Creating Window: {} ({}, {})", m_Data.Title.c_str(), m_Data.Width, m_Data.Height);
 
 		const bool isGLFWInit = glfwInit();
 		if (!isGLFWInit)
 		{
-			printf("\nCouldn't initialize glfw: %u", isGLFWInit);
+			std::println("Couldn't initialize glfw: {}", isGLFWInit);
 			glfwSetErrorCallback(GLFWErrorCallback);
 		}
 
@@ -41,7 +42,7 @@ namespace JSG {
 
 		const uint32_t status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 		if (!status) 
-			printf("Failed to initialize Glad\n");
+			std::println("Failed to initialize Glad; {}", status);
 
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 		SetVSync(true);

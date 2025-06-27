@@ -8,7 +8,7 @@ namespace JSG {
 	public:
 		virtual ~Sandbox() = default;
 
-		virtual void OnUpdate() = 0;
+		virtual void OnUpdate(float ts) = 0;
 		virtual void OnRender() = 0;
 		virtual void OnImGuiRender() = 0;
 		virtual void OnEvent(Event& e) = 0;

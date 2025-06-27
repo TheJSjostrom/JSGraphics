@@ -24,31 +24,80 @@ namespace JSG {
 		glCreateVertexArrays(1, &m_VertexArray);
 		glBindVertexArray(m_VertexArray);
 
-		glCreateBuffers(1, &m_VertexBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer);
-
-		float SquareVertices[4 * 6] = {
-     	// Vertex Position     Local Position
-		   -0.5f, -0.5f, 0.0f, -1.0f, -1.0f, 0.0f,
-			0.5f, -0.5f, 0.0f,  1.0f, -1.0f, 0.0f,
-			0.5f,  0.5f, 0.0f,  1.0f,  1.0f, 0.0f,
-		   -0.5f,  0.5f, 0.0f, -1.0f,  1.0f, 0.0f
+		float vertices[4 * 3] = {
+     	// Vertex Position
+		   -0.5f, -0.5f, 0.0f,
+			0.5f, -0.5f, 0.0f, 
+			0.5f,  0.5f, 0.0f,
+		   -0.5f,  0.5f, 0.0f
 		};
 
-		glBufferData(GL_ARRAY_BUFFER, sizeof(SquareVertices), reinterpret_cast<void*>(SquareVertices), GL_STATIC_DRAW);
+		m_VertexBuffer = std::make_unique<VertexBuffer>(sizeof(vertices), vertices);
+		m_VertexBuffer->Bind();
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+		
+		uint32_t indices[6] = { 0, 1, 2, 2, 3, 0 };
+		m_IndexBuffer = std::make_unique<IndexBuffer>(sizeof(indices), indices);
+		m_IndexBuffer->Bind();
+
+		const std::string vertexSrc = R"(
+			#version 330 core
+			
+			layout(location = 0) in vec3 a_Position;
+			
+			uniform mat4 u_Model;
+			uniform mat4 u_Proj;
+			uniform mat4 u_View;
+			
+			void main()
+			{
+				gl_Position = u_Proj * u_View * u_Model * vec4(a_Position, 1.0);
+			}
+		)";
+
+		const std::string fragSrc = R"(
+			#version 330 core
+			
+			layout(location = 0) out vec4 color;
+
+			uniform vec3 u_Color;
+
+			void main()
+			{ 
+				color = vec4(1.0, 0.0, 0.0, 1.0);
+			}
+		)";
+
+		m_Shader = std::make_unique<Shader>(vertexSrc, fragSrc);
+		m_Shader->Bind();
+
+		// Renderer Circle
+		glCreateVertexArrays(1, &m_CircleVertexArray);
+		glBindVertexArray(m_CircleVertexArray);
+
+		float CircleVertices[4 * 6] = {
+			// Vertex Position     Local Position
+			   -0.5f, -0.5f, 0.0f, -1.0f, -1.0f, 0.0f,
+				0.5f, -0.5f, 0.0f,  1.0f, -1.0f, 0.0f,
+				0.5f,  0.5f, 0.0f,  1.0f,  1.0f, 0.0f,
+			   -0.5f,  0.5f, 0.0f, -1.0f,  1.0f, 0.0f
+		};
+
+		m_CircleVertexBuffer = std::make_unique<VertexBuffer>(sizeof(CircleVertices), CircleVertices);
+		m_CircleVertexBuffer->Bind();
 
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
-		
-		glCreateBuffers(1, &m_IndexBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer);
-		
-		uint32_t indices[6] = { 0, 1, 2, 2, 3, 0 };
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), (void*)indices, GL_STATIC_DRAW);
 
-		const std::string vertexSrc = R"(
+		uint32_t CircleIndices[6] = { 0, 1, 2, 2, 3, 0 };
+		m_CircleIndexBuffer = std::make_unique<IndexBuffer>(sizeof(CircleIndices), CircleIndices);
+		m_CircleIndexBuffer->Bind();
+
+		const std::string CircleVertexSrc = R"(
 			#version 330 core
 			
 			layout(location = 0) in vec3 a_Position;
@@ -56,18 +105,18 @@ namespace JSG {
 			
 			out vec3 FragPos;
 
-			uniform vec3 u_Position;
+			uniform mat4 u_Model;
 			uniform mat4 u_Proj;
 			uniform mat4 u_View;
 			
 			void main()
 			{
 				FragPos = a_LocalPosition;
-				gl_Position = u_Proj * u_View * vec4(a_Position.x + u_Position.x, a_Position.y + u_Position.y, 0.0, 1.0);
+				gl_Position = u_Proj * u_View * u_Model * vec4(a_Position, 1.0);
 			}
 		)";
 
-		const std::string fragSrc = R"(
+		const std::string CircleFragSrc = R"(
 			#version 330 core
 			
 			layout(location = 0) out vec4 color;
@@ -79,84 +128,113 @@ namespace JSG {
 			void main()
 			{ 
 				float FragPosLength = sqrt(FragPos.x * FragPos.x + FragPos.y * FragPos.y);
-				
+				color = vec4(u_Color, 0.0);
+
 				if (FragPosLength < 1.0)
-					color = vec4(u_Color, 1.0);
+					color = vec4(u_Color, 1.0f);
 			}
 		)";
 
-		m_Shader = std::make_unique<Shader>(vertexSrc, fragSrc);
-		m_Shader->Bind();
-
-		for (uint32_t i = 0; i < 100; i++)
-		{
-			m_Number.push_back(rand() % 100);
-		}
-		for (uint32_t i = 0; i < 100; i++)
-		{
-			m_Number2.push_back(rand() % 100);
-		}
+		m_CircleShader = std::make_unique<Shader>(CircleVertexSrc, CircleFragSrc);
+		m_CircleShader->Bind();
 	}
 
 	Sandbox2D::~Sandbox2D()
 	{
 	}
 
-	void Sandbox2D::OnUpdate()
+	void Sandbox2D::OnUpdate(float ts)
 	{
+		m_Shader->Bind();
 		m_Shader->SetFloat3("u_Color", m_CircleColor);
- 
+
+		m_CircleShader->Bind();
+		m_CircleShader->SetFloat3("u_Color", m_CircleColor);
+
 		// Aspect Ratio
 		Application& app = *Application::Get();
 		m_AspectRatio = app.GetWindow().GetWidth() / static_cast<float>(app.GetWindow().GetHeight());
 
-		// Shader
+		// Shader Model Matrix
+		if (Input::IsKeyPressed(GLFW_KEY_RIGHT))
+		{
+			m_PlayerPosition.x += 10.0f * ts;
+		}
+		else if (Input::IsKeyPressed(GLFW_KEY_LEFT))
+		{
+			m_PlayerPosition.x -= 10.0f * ts;
+		}
+
+		if (Input::IsKeyPressed(GLFW_KEY_UP))
+		{
+			m_PlayerPosition.y += 10.0f * ts;
+		}
+		else if (Input::IsKeyPressed(GLFW_KEY_DOWN))
+		{
+			m_PlayerPosition.y -= 10.0f * ts;
+		}
+		if (Input::IsKeyPressed(GLFW_KEY_Z))
+		{
+			m_PlayerRotation += 180.0f * ts;
+		}
+		else if (Input::IsKeyPressed(GLFW_KEY_X))
+		{
+			m_PlayerRotation -= 180.0f * ts;
+		}
+		// Shader Camera - View Matrix
+		m_Shader->Bind();
 		m_Shader->SetMat4("u_Proj", glm::ortho(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel, -1.0f, 1.0f));
+
+		m_CircleShader->Bind();
+		m_CircleShader->SetMat4("u_Proj", glm::ortho(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel, -1.0f, 1.0f));
 
 		glm::vec3 backwardDirection = { 0.0f, 0.0f, 1.0f };
 		glm::vec3 leftDirection = glm::normalize(glm::cross(backwardDirection, m_ForwardDirection));
 
-		m_ForwardDirection.x = glm::cos(glm::radians(m_Rotation + 90.0f));
-		m_ForwardDirection.y = glm::sin(glm::radians(m_Rotation + 90.0f));
+		m_ForwardDirection.x = glm::cos(glm::radians(m_CameraRotation + 90.0f));
+		m_ForwardDirection.y = glm::sin(glm::radians(m_CameraRotation + 90.0f));
 		m_ForwardDirection.z = 0.0f;
 		m_ForwardDirection = glm::normalize(m_ForwardDirection);
 
 		if (Input::IsKeyPressed(GLFW_KEY_W)) 
 		{
-			m_Position.x += m_ForwardDirection.x * 10.0f * 1 / static_cast<float>(60);
-			m_Position.y += m_ForwardDirection.y * 10.0f *  1 / static_cast<float>(60);
+			m_CameraPosition.x += m_ForwardDirection.x * 10.0f * ts;
+			m_CameraPosition.y += m_ForwardDirection.y * 10.0f * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_S))
 		{
-			m_Position.x -= m_ForwardDirection.x * 10.0f * 1 / static_cast<float>(60);
-			m_Position.y -= m_ForwardDirection.y * 10.0f *  1 / static_cast<float>(60);
+			m_CameraPosition.x -= m_ForwardDirection.x * 10.0f * ts;
+			m_CameraPosition.y -= m_ForwardDirection.y * 10.0f * ts;
 		}
 
 		if (Input::IsKeyPressed(GLFW_KEY_A))
 		{
-			m_Position.x += leftDirection.x * 10.0f * 1 / static_cast<float>(60);
-			m_Position.y += leftDirection.y * 10.0f * 1 / static_cast<float>(60);
+			m_CameraPosition.x += leftDirection.x * 10.0f * ts;
+			m_CameraPosition.y += leftDirection.y * 10.0f * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_D))
 		{
-			m_Position.x -= leftDirection.x * 10.0f * 1 / static_cast<float>(60);
-			m_Position.y -= leftDirection.y * 10.0f * 1 / static_cast<float>(60);
+			m_CameraPosition.x -= leftDirection.x * 10.0f * ts;
+			m_CameraPosition.y -= leftDirection.y * 10.0f * ts;
 		}
 
 		if (Input::IsKeyPressed(GLFW_KEY_Q))
 		{
-			m_Rotation += 180.0f * 1 / static_cast<float>(60);
+			m_CameraRotation += 180.0f * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_E))
 		{
-			m_Rotation -= 180.0f * 1 / static_cast<float>(60);
+			m_CameraRotation -= 180.0f * ts;
 		}
 
-		glm::mat4 viewMatrix = glm::translate(glm::mat4(1), m_Position) * glm::rotate(glm::mat4(1.0f), glm::radians(m_Rotation), glm::vec3(0, 0, 1));
+		glm::mat4 viewMatrix = glm::translate(glm::mat4(1), m_CameraPosition) * glm::rotate(glm::mat4(1.0f), glm::radians(m_CameraRotation), glm::vec3(0, 0, 1));
 		viewMatrix = glm::inverse(viewMatrix);
 
+		m_Shader->Bind();
 		m_Shader->SetMat4("u_View", viewMatrix);
 
+		m_CircleShader->Bind();
+		m_CircleShader->SetMat4("u_View", viewMatrix);
 
 		// Dot Product math
 		/*
@@ -192,11 +270,11 @@ namespace JSG {
 
 		if (Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_1) && Input::IsKeyPressed(GLFW_KEY_LEFT_CONTROL))
 		{
-			m_Angle += 1.0f * (1/60.0f);
+			m_Angle += 1.0f * ts;
 		}
 		else if (Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_2) && Input::IsKeyPressed(GLFW_KEY_LEFT_CONTROL))
 		{
-			m_Angle -= 1.0f * (1 / 60.0f);
+			m_Angle -= 1.0f * ts;
 		}
 		// x = .999848    y = .017452
 	//	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(m_Angle), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -217,23 +295,50 @@ namespace JSG {
 		glClearColor(m_BColor.x, m_BColor.y, m_BColor.z, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glBindVertexArray(m_VertexArray);
+		glBindVertexArray(m_CircleVertexArray);
+		m_CircleShader->Bind();
 
-		for (int i = 0; i < m_Number.size(); i++)
+		// Render a squad made of circles
+		for (uint32_t i = 0; i < 20; i++)
 		{
-			for (int y = 0; y < m_Number2.size(); y++)
+			for (uint32_t y = 0; y < 20; y++)
 			{
-				m_Shader->SetFloat3("u_Position", glm::vec3(m_Number[i] - m_Number2[y], m_Number2[y] + m_Number[i], 0.0f));
+				glm::mat4 modelMatrix = glm::translate(glm::mat4(1), {i, y, 0.0f}) * glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0, 0, 1)) * glm::scale(glm::mat4(1), glm::vec3(0.075f, 0.075f, 0.075f));
+				m_CircleShader->SetMat4("u_Model", modelMatrix);
+				float x = i / static_cast<float>(20);
+				m_CircleShader->SetFloat3("u_Color", {x, x, 20 * x });
 				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 			}
 		}
+
+		glBindVertexArray(m_VertexArray);
+		m_Shader->Bind();
+
+		glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_PlayerPosition) * glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0, 0, 1)) * glm::scale(glm::mat4(1), glm::vec3(1.0f, 1.0f, 1.0f));
+		m_Shader->SetMat4("u_Model", modelMatrix);
+		m_Shader->SetFloat3("u_Color", m_PlayerColor);
+
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+		// Render a dot in origo
+		glBindVertexArray(m_CircleVertexArray);
+		m_CircleShader->Bind();
+
+		glm::mat4 viewMatri2 = glm::translate(glm::mat4(1), {0.0f, 0.0f, 0.0f});
+		viewMatri2 = glm::inverse(viewMatri2);
+
+		m_CircleShader->SetMat4("u_View", viewMatri2);
+		m_CircleShader->SetFloat3("u_Color", {1.0f, 1.0f, 1.0f});
+		glm::mat4 modelMatrix2 = glm::translate(glm::mat4(1), { 0.0f, 0.0f, 0.0f }) * glm::scale(glm::mat4(1), glm::vec3(0.05f, 0.05f, 0.05f));
+		m_CircleShader->SetMat4("u_Model", modelMatrix2);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 	}
 
 	void Sandbox2D::OnImGuiRender()
 	{
 		Application* app = Application::Get();
 
-		//ImGui::ShowDemoWindow();
+		ImGui::ShowDemoWindow();
 		ImGui::Begin("Camera");
 		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "CAMERA CONTROLS");
 		ImGui::Text("Move the camera around: WASD");
@@ -245,6 +350,7 @@ namespace JSG {
 		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "COLOR");
 		ImGui::ColorEdit4("Background Color", reinterpret_cast<float*>(&m_BColor));
 		ImGui::ColorEdit4("Circle Color", reinterpret_cast<float*>(&m_CircleColor));
+		ImGui::ColorEdit4("Player Color", reinterpret_cast<float*>(&m_PlayerColor));
 		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "Aspect Ratio");
 		ImGui::Text("Window Height: %f", static_cast<float>(app->GetWindow().GetHeight()));
 		ImGui::Text("Wondow Width: %f", static_cast<float>(app->GetWindow().GetWidth()));
@@ -283,8 +389,8 @@ namespace JSG {
 
 	bool Sandbox2D::OnMouseScrolled(MouseScrolledEvent& e)
 	{
-		m_ZoomLevel += e.GetYOffset() * 0.05f;
-		m_ZoomLevel = std::max(m_ZoomLevel, 0.30f);
+		m_ZoomLevel += e.GetYOffset() * 0.5f;
+		m_ZoomLevel = std::max(m_ZoomLevel, 0.50f);
 		return false;
 	}
 }
