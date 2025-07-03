@@ -5,9 +5,11 @@
 #include "Events/KeyEvent.h"
 #include "Events/ApplicationEvent.h"
 
+#include <print>
 #include <iostream>
-#include "glad/glad.h"
 #include <memory>
+
+#include "glad/glad.h"
 
 namespace JSG {
 

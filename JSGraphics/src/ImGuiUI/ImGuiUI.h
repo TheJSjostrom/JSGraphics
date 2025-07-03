@@ -10,6 +10,8 @@ namespace JSG {
 
 		static void Begin();
 		static void End();
+
+		static void SetDarkThemeColors();
 	};
 
 }

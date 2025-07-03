@@ -8,8 +8,9 @@ namespace JSG {
 	{
 	public:
 		Shader() = default;
-		Shader(const std::string& vertexScr, const std::string& fragSrc);
 		~Shader();
+
+		void Init(const std::string& vertexScr, const std::string& fragSrc);
 
 		void Bind() const;
 		void UnBind() const;
@@ -18,6 +19,8 @@ namespace JSG {
 		void SetFloat3(const std::string& name, const glm::vec3& value);
 		void SetMat4(const std::string& name, const glm::mat4& value);
 	private:
+		void Shutdown();
+
 		void UploadUniformFloat(const std::string& name, float value);
 		void UploadUniformFloat3(const std::string& name, const glm::vec3& value);
 		void UploadUniformMat4(const std::string& name, const glm::mat4& matrix);

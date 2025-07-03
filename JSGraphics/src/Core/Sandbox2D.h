@@ -2,12 +2,14 @@
 #include "Events/Event.h"
 #include "Events/MouseEvent.h"
 
+#include "Core/Sandbox.h"
+
+#include "Renderer/Shader.h"
+#include "Renderer/Buffer.h"
+
 #include "glm/glm.hpp"
 
-#include "Core/Sandbox.h"
-#include "Renderer/Shader.h"
 #include <vector>
-#include "Renderer/Buffer.h"
 
 namespace JSG {
 
@@ -25,25 +27,36 @@ namespace JSG {
 	private:
 		bool OnMouseScrolled(MouseScrolledEvent& e);
 	private:
-		glm::vec3 m_CircleColor = { 0.0f, 0.0f, 0.0f };
-		glm::vec3 m_BColor = { 0.009f, 0.018f, 0.039f };
 		// Shader Data
 		uint32_t m_VertexArray;
-		std::unique_ptr<VertexBuffer> m_VertexBuffer;
-		std::unique_ptr<IndexBuffer> m_IndexBuffer;
-		std::unique_ptr<Shader> m_Shader;
+		VertexBuffer m_VertexBuffer;
+		IndexBuffer m_IndexBuffer;
+		Shader m_Shader;
 
 		uint32_t m_CircleVertexArray;
-		std::unique_ptr<VertexBuffer> m_CircleVertexBuffer;
-		std::unique_ptr<IndexBuffer> m_CircleIndexBuffer;
-		std::unique_ptr<Shader> m_CircleShader;
+		VertexBuffer m_CircleVertexBuffer;
+		IndexBuffer m_CircleIndexBuffer;
+		Shader m_CircleShader;
 
+		float m_Color = 0.0f;
+		bool m_Switch = true;
+		glm::vec3 m_CircleColor = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 m_BColor = { 0.009f, 0.018f, 0.039f };
+
+		// Camera
+		glm::vec3 m_CameraForwardDirection = { 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_CameraPosition = { 0.0f, 0.0f, 0.0f };
 		float m_CameraRotation = 0.0f;
-		float m_PlayerRotation = 0.0f;
+		float m_CameraVelocity = 10.0f;
+
+		// Player
 		glm::vec3 m_PlayerPosition = { 0.0f, 0.0f, 0.0f };
-		glm::vec3 m_ForwardDirection = { 0.0f, 0.0f, 0.0f };
-		glm::vec3 m_PlayerColor = { 1.0f, 0.0f, 0.0f };
+		glm::vec3 m_PlayerColor = { 0.25f, 0.0f, 0.25f };
+		glm::vec3 m_PlayerForwardDirection = { 1.0f, 0.0f, 0.0f };
+		float m_PlayerVelocity = 10.0f;
+		float m_PlayerSize = 1.0f;
+		float m_PlayerRotation = 0.0f;
+
 		std::vector<int> m_Number;
 		std::vector<int> m_Number2;
 
