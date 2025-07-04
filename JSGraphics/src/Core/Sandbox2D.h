@@ -40,7 +40,7 @@ namespace JSG {
 
 		float m_Color = 0.0f;
 		bool m_Switch = true;
-		glm::vec3 m_CircleColor = { 0.0f, 0.0f, 0.0f };
+ 
 		glm::vec3 m_BColor = { 0.009f, 0.018f, 0.039f };
 
 		// Camera
@@ -48,6 +48,12 @@ namespace JSG {
 		glm::vec3 m_CameraPosition = { 0.0f, 0.0f, 0.0f };
 		float m_CameraRotation = 0.0f;
 		float m_CameraVelocity = 10.0f;
+
+		// Circle
+		float m_CircleSize = 1.0f;
+		glm::vec3 m_CircleColor = { 0.5f, 0.0f, 0.25f };
+		float m_CircleXPos = 5.0f;
+		float m_CircleYPos = -5.0f;
 
 		// Player
 		glm::vec3 m_PlayerPosition = { 0.0f, 0.0f, 0.0f };

@@ -46,10 +46,11 @@ namespace JSG {
 			#version 330 core
 			
 			layout(location = 0) in vec3 a_Position;
-			
-			uniform mat4 u_Model;
-			uniform mat4 u_View;
+
 			uniform mat4 u_Proj;
+			uniform mat4 u_View;
+			uniform mat4 u_Model;
+
 			void main()
 			{
 				gl_Position = u_Proj * u_View * u_Model * vec4(a_Position, 1.0);
@@ -104,10 +105,10 @@ namespace JSG {
 			
 			out vec3 FragPos;
 
-			uniform mat4 u_Model;
 			uniform mat4 u_Proj;
 			uniform mat4 u_View;
-			
+			uniform mat4 u_Model;
+
 			void main()
 			{
 				FragPos = a_LocalPosition;
@@ -144,17 +145,11 @@ namespace JSG {
 
 	void Sandbox2D::OnUpdate(float ts)
 	{
-		m_Shader.Bind();
-		m_Shader.SetFloat3("u_Color", m_CircleColor);
-
-		m_CircleShader.Bind();
-		m_CircleShader.SetFloat3("u_Color", m_CircleColor);
-
 		// Aspect Ratio
 		Application& app = *Application::Get();
 		m_AspectRatio = app.GetWindow().GetWidth() / static_cast<float>(app.GetWindow().GetHeight());
 
-		// Shader Model Matrix
+		// Player
 		glm::vec3 PlayerUpDirection = { 0.0f, 0.0f, 1.0f };
 		glm::vec3 PlayerLeftDirection = glm::normalize(glm::cross(PlayerUpDirection, m_PlayerForwardDirection));
 
@@ -185,13 +180,17 @@ namespace JSG {
 
 		if (Input::IsKeyPressed(GLFW_KEY_C))
 		{
-			m_PlayerSize += 1.0f * ts;
+			m_PlayerSize += 5.0f * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_V))
 		{
-			m_PlayerSize -= 1.0f * ts;
+			m_PlayerSize -= 5.0f * ts;
 		}
-		// Shader Camera - View Matrix
+
+		if (m_PlayerSize <= 0.5f)
+			m_PlayerSize = 0.5f;
+
+		// Camera
 		glm::vec3 CameraBackwardDirection = { 0.0f, 0.0f, 1.0f };
 		glm::vec3 CameraleftDirection = glm::normalize(glm::cross(m_CameraForwardDirection, CameraBackwardDirection));
 
@@ -229,6 +228,23 @@ namespace JSG {
 		else if (Input::IsKeyPressed(GLFW_KEY_E))
 		{
 			m_CameraRotation -= 180.0f * ts;
+		}
+
+		if (m_Switch)
+		{
+			m_Color += 1.0f;
+
+			if (m_Color > 1.0f)
+				m_Switch = false;
+
+		}
+		else if (!m_Switch)
+		{
+			m_Color -= 1.0f;
+
+			if (m_Color < 0.1f)
+				m_Switch = true;
+
 		}
 
 		// Dot Product math
@@ -296,67 +312,99 @@ namespace JSG {
 		glClearColor(m_BColor.x, m_BColor.y, m_BColor.z, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glm::mat4 viewMatrix = glm::translate(glm::mat4(1), m_CameraPosition) * glm::rotate(glm::mat4(1.0f), glm::radians(m_CameraRotation), glm::vec3(0, 0, 1));
+		glm::mat4 projectionMatrix = glm::ortho(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel, -1.0f, 1.0f);
+		glm::mat4 viewMatrix = glm::translate(glm::mat4(1), m_CameraPosition) 
+							 * glm::rotate(glm::mat4(1.0f), glm::radians(m_CameraRotation), glm::vec3(0, 0, 1));
 		viewMatrix = glm::inverse(viewMatrix);
-		glm::mat4 projMatrix = glm::ortho(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel, -1.0f, 1.0f);
-
-
+		
 		// Entities |
 		//			v
 		// Render quad player
-		glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_PlayerPosition) * glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0, 0, 1)) * glm::scale(glm::mat4(1), glm::vec3(m_PlayerSize, m_PlayerSize, m_PlayerSize));
-		m_Shader.Bind();
-		m_Shader.SetMat4("u_Proj", projMatrix);
-		m_Shader.SetMat4("u_View", viewMatrix);
-		m_Shader.SetMat4("u_Model", modelMatrix);
-		m_Shader.SetFloat3("u_Color", m_PlayerColor);
+		{
+			m_Shader.Bind();
+			m_Shader.SetMat4("u_Proj", projectionMatrix);
+			m_Shader.SetMat4("u_View", viewMatrix);
 
-		glBindVertexArray(m_VertexArray);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+			glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_PlayerPosition) 
+								  * glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0, 0, 1)) 
+								  * glm::scale(glm::mat4(1), glm::vec3(m_PlayerSize, m_PlayerSize, m_PlayerSize));
+			m_Shader.SetMat4("u_Model", modelMatrix);
+			m_Shader.SetFloat3("u_Color", m_PlayerColor);
+
+			glBindVertexArray(m_VertexArray);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		}
+
+		// Render a quad.
+		{
+			m_Shader.Bind();
+			m_Shader.SetMat4("u_Proj", projectionMatrix);
+			m_Shader.SetMat4("u_View", viewMatrix);
+			
+			glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 5.0f, 0.0f))
+								  * glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
+				                  * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+			m_Shader.SetMat4("u_Model", modelMatrix);
+			m_CircleShader.SetFloat3("u_Color", { 0.25f, 0.1f, 0.20f });
+
+			glBindVertexArray(m_VertexArray);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		}
+
+
+		// Render a circle.
+		{
+			m_CircleShader.Bind();
+			m_CircleShader.SetMat4("u_Proj", projectionMatrix);
+			m_CircleShader.SetMat4("u_View", viewMatrix);
+
+			glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(m_CircleXPos, m_CircleYPos, 0.0f))
+				* glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
+				* glm::scale(glm::mat4(1.0f), glm::vec3(m_CircleSize, m_CircleSize, m_CircleSize));
+			m_CircleShader.SetMat4("u_Model", modelMatrix);
+			m_CircleShader.SetFloat3("u_Color", m_CircleColor);
+
+			glBindVertexArray(m_CircleVertexArray);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		}
 
 		// Render a quad made of circles
-		glBindVertexArray(m_CircleVertexArray);
-		m_CircleShader.Bind();
-		m_CircleShader.SetMat4("u_View", viewMatrix);
-		m_CircleShader.SetMat4("u_Proj", projMatrix);
-
-		if (m_Switch)
 		{
-			m_Color += 1.0f;
-
-			if (m_Color > 1.0f)
-				m_Switch = false;
-		
-		}
-		else if (!m_Switch)
-		{
-			m_Color -= 1.0f;
-
-			if (m_Color < 0.1f)
-				m_Switch = true;
-		
-		}
-		for (uint32_t i = 0; i < 20; i++)
-		{
-			for (uint32_t y = 0; y < 20; y++)
+			for (uint32_t i = 0; i < 20; i++)
 			{
-				glm::mat4 modelMatrix = glm::translate(glm::mat4(1), {i, y, 0.0f}) * glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0, 0, 1)) * glm::scale(glm::mat4(1), glm::vec3(0.1f, 0.1f, 0.1f));
-				m_CircleShader.SetMat4("u_Model", modelMatrix);
-				m_CircleShader.SetFloat3("u_Color", { 1.0f, 0.0f, 1.0f * i/static_cast<float>(20)});
-				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+				for (uint32_t y = 0; y < 20; y++)
+				{
+					glm::mat4 modelMatrix = glm::translate(glm::mat4(1), {i, y, 0.0f}) 
+										  * glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0.0f, 0.0f, 1.0f)) 
+										  * glm::scale(glm::mat4(1), glm::vec3(0.1f, 0.1f, 0.1f));
+					m_CircleShader.SetMat4("u_Model", modelMatrix);
+					m_CircleShader.SetFloat3("u_Color", { 1.0f, 0.0f, 1.0f * i/static_cast<float>(20)});
+
+					glBindVertexArray(m_CircleVertexArray);
+					glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+				}
 			}
 		}
 
 		// Render a dot in origo
-		glm::mat4 viewMatri2 = glm::translate(glm::mat4(1), {0.0f, 0.0f, 0.0f});
-		glm::mat4 modelMatrix2 = glm::translate(glm::mat4(1), { 0.0f, 0.0f, 0.0f }) * glm::scale(glm::mat4(1), glm::vec3(0.009f, 0.009f, 0.009f));
-		viewMatri2 = glm::inverse(viewMatri2);
-		m_CircleShader.SetMat4("u_Proj", glm::ortho(-m_AspectRatio, m_AspectRatio, -1.0f, 1.0f, -1.0f, 1.0f));
-		m_CircleShader.SetMat4("u_View", viewMatri2);
-		m_CircleShader.SetFloat3("u_Color", {1.0f, 1.0f, 1.0f});
-		m_CircleShader.SetMat4("u_Model", modelMatrix2);
+		{
+			glm::mat4 projMatrix = glm::ortho(-m_AspectRatio, m_AspectRatio, -1.0f, 1.0f, -1.0f, 1.0f);
+			glm::mat4 viewMatrix = glm::translate(glm::mat4(1), {0.0f, 0.0f, 0.0f});
+			viewMatrix = glm::inverse(viewMatrix);
 
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+			m_CircleShader.Bind();
+			m_CircleShader.SetMat4("u_Proj", projMatrix);
+			m_CircleShader.SetMat4("u_View", viewMatrix);
+
+			glm::mat4 modelMatrix = glm::translate(glm::mat4(1), { 0.0f, 0.0f, 0.0f }) 
+								   * glm::scale(glm::mat4(1), glm::vec3(0.009f, 0.009f, 0.009f));
+			m_CircleShader.SetMat4("u_Model", modelMatrix);
+			m_CircleShader.SetFloat3("u_Color", {1.0f, 1.0f, 1.0f});
+
+			glBindVertexArray(m_CircleVertexArray);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		}
+
 	}
 
 	void Sandbox2D::OnImGuiRender()
@@ -378,12 +426,17 @@ namespace JSG {
 		ImGui::Begin("Settings");
 		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "COLOR");
 		ImGui::ColorEdit4("Background Color", reinterpret_cast<float*>(&m_BColor));
-		ImGui::ColorEdit4("Circle Color", reinterpret_cast<float*>(&m_CircleColor));
 		ImGui::ColorEdit4("Player Color", reinterpret_cast<float*>(&m_PlayerColor));
 		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "Aspect Ratio");
 		ImGui::Text("Window Height: %f", static_cast<float>(app->GetWindow().GetHeight()));
 		ImGui::Text("Wondow Width: %f", static_cast<float>(app->GetWindow().GetWidth()));
 		ImGui::Text("Window Aspect Ratio: %f", m_AspectRatio);
+
+		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "Circle Settings");
+		ImGui::SliderFloat("Size: ", &m_CircleSize, 1.0f, 100.0f);
+		ImGui::SliderFloat("X position", &m_CircleXPos, -100.0f, 100.0f);
+		ImGui::SliderFloat("Y position", &m_CircleYPos, -100.0f, 100.0f);
+		ImGui::ColorEdit4("Circle Color: ", reinterpret_cast<float*>(&m_CircleColor));
 		ImGui::End();
 
 		ImGui::Begin("Math");
