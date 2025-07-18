@@ -6,7 +6,13 @@ namespace JSG {
 	class Sandbox
 	{
 	public:
-		virtual ~Sandbox() = default;
+		Sandbox() 
+		{
+		}
+
+		virtual ~Sandbox() 
+		{
+		}
 
 		virtual void OnUpdate(float ts) = 0;
 		virtual void OnRender() = 0;

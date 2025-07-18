@@ -44,8 +44,6 @@ namespace JSG {
 	{
 		// Start the Dear ImGui frame b
 		ImGuiIO& io = ImGui::GetIO();
-		Application& app = *Application::Get();
-		io.DisplaySize = ImVec2(static_cast<float>(app.GetWindow().GetWidth()), static_cast<float>(app.GetWindow().GetHeight()));
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

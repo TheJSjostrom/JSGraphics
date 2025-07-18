@@ -32,7 +32,7 @@ namespace JSG {
 	{
 		while (m_Running)
 		{
-			float time = glfwGetTime();
+			float time = static_cast<float>(glfwGetTime());
 			float timestep = time - m_LastFrameTime;
 			m_LastFrameTime = time;
 

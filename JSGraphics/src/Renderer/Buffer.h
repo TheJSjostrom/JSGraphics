@@ -6,7 +6,6 @@ namespace JSG {
 	class VertexBuffer
 	{
 	public:
-		VertexBuffer() = default;
 		~VertexBuffer();
 
 		void Init(uint32_t size, float* vertices);
@@ -22,7 +21,6 @@ namespace JSG {
 	class IndexBuffer
 	{
 	public:
-		IndexBuffer() = default;
 		~IndexBuffer();
 
 		void Init(uint32_t size, uint32_t* indices);

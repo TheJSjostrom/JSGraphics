@@ -16,33 +16,34 @@
 
 namespace JSG {
 
-	Sandbox2D::Sandbox2D()
+	Sandbox2D::Sandbox2D() :
+		m_Camera(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel)
 	{
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		glCreateVertexArrays(1, &m_VertexArray);
-		glBindVertexArray(m_VertexArray);
+		// Triangle
+		glCreateVertexArrays(1, &m_TriangleVertexArray);
+		glBindVertexArray(m_TriangleVertexArray);
 
-		float vertices[4 * 3] = {
-     	// Vertex Position
-		   -0.5f, -0.5f, 0.0f,
-			0.5f, -0.5f, 0.0f, 
-			0.5f,  0.5f, 0.0f,
-		   -0.5f,  0.5f, 0.0f
+		float TriangleVertices[3 * 3] = {
+			// Vertex Position
+				-0.5f, 0.0f, 0.0f,
+				 0.5f, 0.0f, 0.0f,
+				 0.0f, 0.5f, 0.0
 		};
 
-		m_VertexBuffer.Init(sizeof(vertices), vertices);
-		m_VertexBuffer.Bind();
+		m_TriangleVertexBuffer.Init(sizeof(TriangleVertices), TriangleVertices);
+		m_TriangleVertexBuffer.Bind();
 
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-		
-		uint32_t indices[6] = { 0, 1, 2, 2, 3, 0 };
-		m_IndexBuffer.Init(sizeof(indices), indices);
-		m_IndexBuffer.Bind();
 
-		const std::string vertexSrc = R"(
+		uint32_t TriangleIndices[3] = { 0, 1, 2 };
+		m_TriangleIndexBuffer.Init(sizeof(TriangleIndices), TriangleIndices);
+		m_TriangleIndexBuffer.Bind();
+
+		const std::string TriangleVertexSrc = R"(
 			#version 330 core
 			
 			layout(location = 0) in vec3 a_Position;
@@ -57,7 +58,7 @@ namespace JSG {
 			}
 		)";
 
-		const std::string fragSrc = R"(
+		const std::string TriangleFragSrc = R"(
 			#version 330 core
 			
 			layout(location = 0) out vec4 color;
@@ -70,10 +71,63 @@ namespace JSG {
 			}
 		)";
 
-		m_Shader.Init(vertexSrc, fragSrc);
-		m_Shader.Bind();
+		m_TriangleShader.Init(TriangleVertexSrc, TriangleFragSrc);
+		m_TriangleShader.Bind();
 
-		// Renderer Circle
+		// Quad
+		glCreateVertexArrays(1, &m_QuadVertexArray);
+		glBindVertexArray(m_QuadVertexArray);
+
+		float QuadVertices[4 * 3] = {
+     	// Vertex Position
+		   -0.5f, -0.5f, 0.0f,
+			0.5f, -0.5f, 0.0f, 
+			0.5f,  0.5f, 0.0f,
+		   -0.5f,  0.5f, 0.0f
+		};
+
+		m_QuadVertexBuffer.Init(sizeof(QuadVertices), QuadVertices);
+		m_QuadVertexBuffer.Bind();
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+		
+		uint32_t QuadIndices[6] = { 0, 1, 2, 2, 3, 0 };
+		m_QuadIndexBuffer.Init(sizeof(QuadIndices), QuadIndices);
+		m_QuadIndexBuffer.Bind();
+
+		const std::string QuadVertexSrc = R"(
+			#version 330 core
+			
+			layout(location = 0) in vec3 a_Position;
+
+			uniform mat4 u_Proj;
+			uniform mat4 u_View;
+			uniform mat4 u_Model;
+
+			void main()
+			{
+				gl_Position = u_Proj * u_View * u_Model * vec4(a_Position, 1.0);
+			}
+		)";
+
+		const std::string QuadFragSrc = R"(
+			#version 330 core
+			
+			layout(location = 0) out vec4 color;
+
+			uniform vec3 u_Color;
+
+			void main()
+			{ 
+				color = vec4(u_Color, 1.0);
+			}
+		)";
+
+		m_QuadShader.Init(QuadVertexSrc, QuadFragSrc);
+		m_QuadShader.Bind();
+
+		// Circle
 		glCreateVertexArrays(1, &m_CircleVertexArray);
 		glBindVertexArray(m_CircleVertexArray);
 
@@ -145,10 +199,6 @@ namespace JSG {
 
 	void Sandbox2D::OnUpdate(float ts)
 	{
-		// Aspect Ratio
-		Application& app = *Application::Get();
-		m_AspectRatio = app.GetWindow().GetWidth() / static_cast<float>(app.GetWindow().GetHeight());
-
 		// Player
 		glm::vec3 PlayerUpDirection = { 0.0f, 0.0f, 1.0f };
 		glm::vec3 PlayerLeftDirection = glm::normalize(glm::cross(PlayerUpDirection, m_PlayerForwardDirection));
@@ -247,46 +297,16 @@ namespace JSG {
 
 		}
 
-		// Dot Product math
-		/*
-		if (Input::IsKeyPressed(GLFW_KEY_A) && Input::IsKeyPressed(GLFW_KEY_LEFT_CONTROL))
-		{
-			m_VAngle += 180 * (1 / 60.0f);
-		}
-		else if (Input::IsKeyPressed(GLFW_KEY_D) && Input::IsKeyPressed(GLFW_KEY_LEFT_CONTROL))
-		{
-			m_VAngle -= 180 * (1 / 60.0f);
-		}
-		*/
-		m_V = { glm::cos(glm::radians(m_VAngle)), glm::sin(glm::radians(m_VAngle)) };
-		m_V2 = { glm::cos(glm::radians(m_V2Angle)) * 5.09901953f, glm::sin(glm::radians(m_V2Angle)) * 5.09901953f };
+		glm::vec2 ïVector;
+		ïVector.x = 3 * glm::cos(glm::radians(ïVectorRotation));
+		ïVector.y = 3 * glm::sin(glm::radians(ïVectorRotation));
 
-		float LengthVector = glm::sqrt(m_V.x * m_V.x + m_V.y * m_V.y);
-	    float LengthVector2 = glm::sqrt(m_V2.x * m_V2.x + m_V2.y * m_V2.y);
-		float x = m_V.x * m_V2.x;
-		float y = m_V.y * m_V2.y;
-		m_DotProduct = m_V.x * m_V2.x + m_V.y * m_V2.y;
-		m_DotProduct2 = glm::cos(glm::radians(m_VAngle - m_V2Angle)) * 5.09901953f * glm::sqrt(m_V.x * m_V.x + m_V.y * m_V.y);
+		glm::vec2 ÿVector;
+		ÿVector.x = 2 * glm::cos(glm::radians(ÿVectorRotation));
+		ÿVector.y = 2 * glm::sin(glm::radians(ÿVectorRotation));
 
-		// Rotation math
-		glm::vec2 iVector = { glm::cos(glm::radians(m_Angle)), glm::sin(glm::radians(m_Angle)) };
-		m_IVector = iVector;
-		glm::vec2 jVector = { -glm::sin(glm::radians(m_Angle)), glm::cos(glm::radians(m_Angle)) };
-		glm::vec2 pos = { 0.5f, 0.5f };
+		float det = ïVector.x * ÿVector.y - ÿVector.x * ïVector.y;
 
-		glm::vec2 transformedPos = pos.x * iVector + pos.y * jVector;
-		const float transformedPosLength = glm::sqrt(transformedPos.x * transformedPos.x + transformedPos.y * transformedPos.y);
-		glm::vec2 transformedPosUV = { transformedPos.x / transformedPosLength, transformedPos.y / transformedPosLength };
-		m_PosUV = transformedPosUV;
-
-		if (Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_1) && Input::IsKeyPressed(GLFW_KEY_LEFT_CONTROL))
-		{
-			m_Angle += 1.0f * ts;
-		}
-		else if (Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_2) && Input::IsKeyPressed(GLFW_KEY_LEFT_CONTROL))
-		{
-			m_Angle -= 1.0f * ts;
-		}
 		// x = .999848    y = .017452
     	//	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(m_Angle), glm::vec3(0.0f, 0.0f, 1.0f));
 		// 
@@ -308,6 +328,9 @@ namespace JSG {
 
 	void Sandbox2D::OnRender()
 	{
+		Application& app = *Application::Get();
+		m_AspectRatio = app.GetWindow().GetWidth() / static_cast<float>(app.GetWindow().GetHeight());
+
 		// Clear the the whole scene.
 		glClearColor(m_BColor.x, m_BColor.y, m_BColor.z, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -319,38 +342,37 @@ namespace JSG {
 		
 		// Entities |
 		//			v
-		// Render quad player
+		// Render a triangle
 		{
-			m_Shader.Bind();
-			m_Shader.SetMat4("u_Proj", projectionMatrix);
-			m_Shader.SetMat4("u_View", viewMatrix);
+			m_TriangleShader.Bind();
+			m_TriangleShader.SetMat4("u_Proj", projectionMatrix);
+			m_TriangleShader.SetMat4("u_View", viewMatrix);
 
-			glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_PlayerPosition) 
-								  * glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0, 0, 1)) 
-								  * glm::scale(glm::mat4(1), glm::vec3(m_PlayerSize, m_PlayerSize, m_PlayerSize));
-			m_Shader.SetMat4("u_Model", modelMatrix);
-			m_Shader.SetFloat3("u_Color", m_PlayerColor);
+			glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_TrianglePosition)
+								  * glm::rotate(glm::mat4(1.0f), glm::radians(m_TriangleRotation), glm::vec3(0, 0, 1))
+								  * glm::scale(glm::mat4(1), glm::vec3(m_TriangleSize, m_TriangleSize, m_TriangleSize));
+			m_TriangleShader.SetMat4("u_Model", modelMatrix);
+			m_TriangleShader.SetFloat3("u_Color", m_TriangleColor);
 
-			glBindVertexArray(m_VertexArray);
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+			glBindVertexArray(m_TriangleVertexArray);
+			glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
 		}
 
 		// Render a quad.
 		{
-			m_Shader.Bind();
-			m_Shader.SetMat4("u_Proj", projectionMatrix);
-			m_Shader.SetMat4("u_View", viewMatrix);
+			m_QuadShader.Bind();
+			m_QuadShader.SetMat4("u_Proj", projectionMatrix);
+			m_QuadShader.SetMat4("u_View", viewMatrix);
 			
-			glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 5.0f, 0.0f))
-								  * glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
-				                  * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-			m_Shader.SetMat4("u_Model", modelMatrix);
-			m_CircleShader.SetFloat3("u_Color", { 0.25f, 0.1f, 0.20f });
+			glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), m_QuadPosition)
+								  * glm::rotate(glm::mat4(1.0f), glm::radians(m_QuadRotation), glm::vec3(0.0f, 0.0f, 1.0f))
+				                  * glm::scale(glm::mat4(1.0f), glm::vec3(m_QuadSize, m_QuadSize, m_QuadSize));
+			m_QuadShader.SetMat4("u_Model", modelMatrix);
+			m_CircleShader.SetFloat3("u_Color", m_QuadColor);
 
-			glBindVertexArray(m_VertexArray);
+			glBindVertexArray(m_QuadVertexArray);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		}
-
 
 		// Render a circle.
 		{
@@ -358,9 +380,9 @@ namespace JSG {
 			m_CircleShader.SetMat4("u_Proj", projectionMatrix);
 			m_CircleShader.SetMat4("u_View", viewMatrix);
 
-			glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(m_CircleXPos, m_CircleYPos, 0.0f))
-				* glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
-				* glm::scale(glm::mat4(1.0f), glm::vec3(m_CircleSize, m_CircleSize, m_CircleSize));
+			glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), m_CirclePosition)
+								  * glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
+							      * glm::scale(glm::mat4(1.0f), glm::vec3(m_CircleSize, m_CircleSize, m_CircleSize));
 			m_CircleShader.SetMat4("u_Model", modelMatrix);
 			m_CircleShader.SetFloat3("u_Color", m_CircleColor);
 
@@ -375,15 +397,31 @@ namespace JSG {
 				for (uint32_t y = 0; y < 20; y++)
 				{
 					glm::mat4 modelMatrix = glm::translate(glm::mat4(1), {i, y, 0.0f}) 
-										  * glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0.0f, 0.0f, 1.0f)) 
-										  * glm::scale(glm::mat4(1), glm::vec3(0.1f, 0.1f, 0.1f));
+										  * glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)) 
+										  * glm::scale(glm::mat4(1), glm::vec3(0.5f, 0.5f, 0.5f));
 					m_CircleShader.SetMat4("u_Model", modelMatrix);
-					m_CircleShader.SetFloat3("u_Color", { 1.0f, 0.0f, 1.0f * i/static_cast<float>(20)});
+					m_CircleShader.SetFloat3("u_Color", { m_QCColor, 0.0f, 1.0f * i/static_cast<float>(20)});
 
 					glBindVertexArray(m_CircleVertexArray);
 					glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 				}
 			}
+		}
+
+		// Render quad player
+		{
+			m_QuadShader.Bind();
+			m_QuadShader.SetMat4("u_Proj", projectionMatrix);
+			m_QuadShader.SetMat4("u_View", viewMatrix);
+
+			glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_PlayerPosition)
+				* glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0, 0, 1))
+				* glm::scale(glm::mat4(1), glm::vec3(m_PlayerSize, m_PlayerSize, m_PlayerSize));
+			m_QuadShader.SetMat4("u_Model", modelMatrix);
+			m_QuadShader.SetFloat3("u_Color", m_PlayerColor);
+
+			glBindVertexArray(m_QuadVertexArray);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		}
 
 		// Render a dot in origo
@@ -397,7 +435,7 @@ namespace JSG {
 			m_CircleShader.SetMat4("u_View", viewMatrix);
 
 			glm::mat4 modelMatrix = glm::translate(glm::mat4(1), { 0.0f, 0.0f, 0.0f }) 
-								   * glm::scale(glm::mat4(1), glm::vec3(0.009f, 0.009f, 0.009f));
+								  * glm::scale(glm::mat4(1), glm::vec3(0.009f, 0.009f, 0.009f));
 			m_CircleShader.SetMat4("u_Model", modelMatrix);
 			m_CircleShader.SetFloat3("u_Color", {1.0f, 1.0f, 1.0f});
 
@@ -424,21 +462,49 @@ namespace JSG {
 		ImGui::End();
 
 		ImGui::Begin("Settings");
-		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "COLOR");
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "COLOR");
 		ImGui::ColorEdit4("Background Color", reinterpret_cast<float*>(&m_BColor));
-		ImGui::ColorEdit4("Player Color", reinterpret_cast<float*>(&m_PlayerColor));
 		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "Aspect Ratio");
 		ImGui::Text("Window Height: %f", static_cast<float>(app->GetWindow().GetHeight()));
 		ImGui::Text("Wondow Width: %f", static_cast<float>(app->GetWindow().GetWidth()));
 		ImGui::Text("Window Aspect Ratio: %f", m_AspectRatio);
 
-		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "Circle Settings");
-		ImGui::SliderFloat("Size: ", &m_CircleSize, 1.0f, 100.0f);
-		ImGui::SliderFloat("X position", &m_CircleXPos, -100.0f, 100.0f);
-		ImGui::SliderFloat("Y position", &m_CircleYPos, -100.0f, 100.0f);
-		ImGui::ColorEdit4("Circle Color: ", reinterpret_cast<float*>(&m_CircleColor));
+		ImGui::ColorEdit4("Circle Color", reinterpret_cast<float*>(&m_QCColor));
+		ImGui::Text(" ");
+
+		// Player Settings
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Player Settings");
+		ImGui::ColorEdit4("Player Color", reinterpret_cast<float*>(&m_PlayerColor));
+		ImGui::Text(" ");
+
+		// Circle Settings
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Circle Settings");
+		ImGui::SliderFloat("Circle Size", &m_CircleSize, 1.0f, 100.0f);
+		ImGui::SliderFloat("Circle X Position", &m_CirclePosition.x, -100.0f, 100.0f);
+		ImGui::SliderFloat("Circle Y Position", &m_CirclePosition.y, -100.0f, 100.0f);
+		ImGui::ColorEdit4("Circle Color", reinterpret_cast<float*>(&m_CircleColor));
+		ImGui::Text(" ");
+
+		// Quad Settings
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Quad Settings");
+		ImGui::SliderFloat("Quad Size", &m_QuadSize, 1.0f, 100.0f);
+		ImGui::SliderFloat("Quad Rotation", &m_QuadRotation, 0.0f, 360.0f);
+		ImGui::SliderFloat("Quad X Position", &m_QuadPosition.x, -100.0f, 100.0f);
+		ImGui::SliderFloat("Quad Y Position", &m_QuadPosition.y, -100.0f, 100.0f);
+		ImGui::ColorEdit4("Quad Color", reinterpret_cast<float*>(&m_QuadColor));
+		ImGui::Text(" ");
+
+		// Triangle Settings
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Triangle Settings");
+		ImGui::SliderFloat("Triangle Size", &m_TriangleSize, 1.0f, 100.0f);
+		ImGui::SliderFloat("Triangle Rotation", &m_TriangleRotation, 0.0f, 360.0f);
+		ImGui::SliderFloat("Triangle X Position", &m_TrianglePosition.x, -100.0f, 100.0f);
+		ImGui::SliderFloat("Triangle Y Position", &m_TrianglePosition.y, -100.0f, 100.0f);
+		ImGui::ColorEdit4("Triangle Color", reinterpret_cast<float*>(&m_TriangleColor));
+
 		ImGui::End();
 
+		/*
 		ImGui::Begin("Math");
 		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "ROTATION");
 		ImGui::SliderFloat("Change Angle", &m_Angle, 0.0f, 360.0f);
@@ -461,6 +527,7 @@ namespace JSG {
 		ImGui::Text("Vector: %f, %f", m_V.x, m_V.y);
 		ImGui::Text("Vector2: %f, %f", m_V2.x, m_V2.y);
 		ImGui::End();
+		*/
 	}
 
 	void Sandbox2D::OnEvent(Event& e)
