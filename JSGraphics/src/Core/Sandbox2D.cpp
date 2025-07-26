@@ -16,7 +16,7 @@
 
 namespace JSG {
 
-	Sandbox2D::Sandbox2D() :
+	Sandbox2D::Sandbox2D() : 
 		m_Camera(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel)
 	{
 		glEnable(GL_BLEND);
@@ -28,9 +28,9 @@ namespace JSG {
 
 		float TriangleVertices[3 * 3] = {
 			// Vertex Position
-				-0.5f, 0.0f, 0.0f,
-				 0.5f, 0.0f, 0.0f,
-				 0.0f, 0.5f, 0.0
+			-0.5f, 0.0f, 0.0f,
+			 0.5f, 0.0f, 0.0f,
+			 0.0f, 0.5f, 0.0
 		};
 
 		m_TriangleVertexBuffer.Init(sizeof(TriangleVertices), TriangleVertices);
@@ -133,10 +133,10 @@ namespace JSG {
 
 		float CircleVertices[4 * 6] = {
 			// Vertex Position     Local Position
-			   -0.5f, -0.5f, 0.0f, -1.0f, -1.0f, 0.0f,
-				0.5f, -0.5f, 0.0f,  1.0f, -1.0f, 0.0f,
-				0.5f,  0.5f, 0.0f,  1.0f,  1.0f, 0.0f,
-			   -0.5f,  0.5f, 0.0f, -1.0f,  1.0f, 0.0f
+			-0.5f, -0.5f, 0.0f, -1.0f, -1.0f, 0.0f,
+			 0.5f, -0.5f, 0.0f,  1.0f, -1.0f, 0.0f,
+			 0.5f,  0.5f, 0.0f,  1.0f,  1.0f, 0.0f,
+			-0.5f,  0.5f, 0.0f, -1.0f,  1.0f, 0.0f
 		};
 
 		m_CircleVertexBuffer.Init(sizeof(CircleVertices), CircleVertices);
@@ -230,45 +230,47 @@ namespace JSG {
 
 		if (Input::IsKeyPressed(GLFW_KEY_C))
 		{
-			m_PlayerSize += 5.0f * ts;
+			m_PlayerSize += m_PlayerSizeSpeed * ts;
+			m_PlayerVelocity -= m_PlayerSize;
 		}
+ 
 		else if (Input::IsKeyPressed(GLFW_KEY_V))
 		{
-			m_PlayerSize -= 5.0f * ts;
+			m_PlayerSize -= m_PlayerSizeSpeed * ts;
+			m_PlayerVelocity += m_PlayerSize;
 		}
-
-		if (m_PlayerSize <= 0.5f)
-			m_PlayerSize = 0.5f;
+ 
+		m_PlayerSize = std::max(m_PlayerSize, 0.5f);
 
 		// Camera
 		glm::vec3 CameraBackwardDirection = { 0.0f, 0.0f, 1.0f };
-		glm::vec3 CameraleftDirection = glm::normalize(glm::cross(m_CameraForwardDirection, CameraBackwardDirection));
+		glm::vec3 CameraRightDirection = glm::normalize(glm::cross(m_CameraUpDirection, CameraBackwardDirection));
 
-		m_CameraForwardDirection.x = glm::cos(glm::radians(m_CameraRotation + 90.0f));
-		m_CameraForwardDirection.y = glm::sin(glm::radians(m_CameraRotation + 90.0f));
-		m_CameraForwardDirection.z = 0.0f;
-		m_CameraForwardDirection = glm::normalize(m_CameraForwardDirection);
+		m_CameraUpDirection.x = glm::cos(glm::radians(m_CameraRotation + 90.0f));
+		m_CameraUpDirection.y = glm::sin(glm::radians(m_CameraRotation + 90.0f));
+		m_CameraUpDirection.z = 0.0f;
+		m_CameraUpDirection = glm::normalize(m_CameraUpDirection);
 
 		if (Input::IsKeyPressed(GLFW_KEY_W)) 
 		{
-			m_CameraPosition.x += m_CameraForwardDirection.x * m_CameraVelocity * ts;
-			m_CameraPosition.y += m_CameraForwardDirection.y * m_CameraVelocity * ts;
+			m_CameraPosition.x += m_CameraUpDirection.x * m_CameraVelocity * ts;
+			m_CameraPosition.y += m_CameraUpDirection.y * m_CameraVelocity * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_S))
 		{
-			m_CameraPosition.x -= m_CameraForwardDirection.x * m_CameraVelocity * ts;
-			m_CameraPosition.y -= m_CameraForwardDirection.y * m_CameraVelocity * ts;
+			m_CameraPosition.x -= m_CameraUpDirection.x * m_CameraVelocity * ts;
+			m_CameraPosition.y -= m_CameraUpDirection.y * m_CameraVelocity * ts;
 		}
 
 		if (Input::IsKeyPressed(GLFW_KEY_D))
 		{
-			m_CameraPosition.x += CameraleftDirection.x * m_CameraVelocity * ts;
-			m_CameraPosition.y += CameraleftDirection.y * m_CameraVelocity * ts;
+			m_CameraPosition.x += CameraRightDirection.x * m_CameraVelocity * ts;
+			m_CameraPosition.y += CameraRightDirection.y * m_CameraVelocity * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_A))
 		{
-			m_CameraPosition.x -= CameraleftDirection.x * m_CameraVelocity * ts;
-			m_CameraPosition.y -= CameraleftDirection.y * m_CameraVelocity * ts;
+			m_CameraPosition.x -= CameraRightDirection.x * m_CameraVelocity * ts;
+			m_CameraPosition.y -= CameraRightDirection.y * m_CameraVelocity * ts;
 		}
 
 		if (Input::IsKeyPressed(GLFW_KEY_Q))
@@ -278,23 +280,6 @@ namespace JSG {
 		else if (Input::IsKeyPressed(GLFW_KEY_E))
 		{
 			m_CameraRotation -= 180.0f * ts;
-		}
-
-		if (m_Switch)
-		{
-			m_Color += 1.0f;
-
-			if (m_Color > 1.0f)
-				m_Switch = false;
-
-		}
-		else if (!m_Switch)
-		{
-			m_Color -= 1.0f;
-
-			if (m_Color < 0.1f)
-				m_Switch = true;
-
 		}
 
 		glm::vec2 ïVector;
@@ -307,6 +292,9 @@ namespace JSG {
 
 		float det = ïVector.x * ÿVector.y - ÿVector.x * ïVector.y;
 
+		// Scaling Matrix
+
+		// Rotation Matrix
 		// x = .999848    y = .017452
     	//	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(m_Angle), glm::vec3(0.0f, 0.0f, 1.0f));
 		// 
@@ -320,6 +308,8 @@ namespace JSG {
 		// position.x * [cos(45.0f)] + position.y * [-sin(45.0f)]
 		//              [sin(45.0f)]                [ cos(45.0f)]
 
+
+		// TRanslation Matrix.
 		// [1 0 0 2]  {0.5}        {1}       {0}     {0}   {2}       {0.5}   {2} 
 		// [0 1 0 3]  {0.5}	   0.5*{0} + 0.5*{1} + 0*{0} + {3}       {0.5} + {3} 
 		// [0 0 1 0]  {0}          {0}       {0}     {1}   {0}       {0}     {0}
@@ -389,7 +379,7 @@ namespace JSG {
 			glBindVertexArray(m_CircleVertexArray);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		}
-
+		
 		// Render a quad made of circles
 		{
 			for (uint32_t i = 0; i < 20; i++)
@@ -400,7 +390,7 @@ namespace JSG {
 										  * glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)) 
 										  * glm::scale(glm::mat4(1), glm::vec3(0.5f, 0.5f, 0.5f));
 					m_CircleShader.SetMat4("u_Model", modelMatrix);
-					m_CircleShader.SetFloat3("u_Color", { m_QCColor, 0.0f, 1.0f * i/static_cast<float>(20)});
+					m_CircleShader.SetFloat3("u_Color", { m_QCColor, 0.0f, 0.1f * i});
 
 					glBindVertexArray(m_CircleVertexArray);
 					glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
@@ -451,27 +441,42 @@ namespace JSG {
 
 		//ImGui::ShowDemoWindow();
 		ImGui::Begin("Camera Information");
-		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "CAMERA CONTROLS");
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "CAMERA CONTROLS");
 		ImGui::Text("Move the camera around: WASD");
 		ImGui::Text("Zoom in and out: Mouse Scroll Wheel");
 		ImGui::Text("Rotate the camera: QE");
 		ImGui::Text(" ");
-		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "CAMERA INFORMATION");
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "CAMERA INFORMATION");
 		ImGui::Text("Camera Rotation Angle: %f", m_CameraRotation);
+		ImGui::Text("Camera Zoom Level: %f", m_ZoomLevel);
 		ImGui::Text("Camera Position: { %f, %f, %f }", m_CameraPosition.x, m_CameraPosition.y, m_CameraPosition.z);
 		ImGui::End();
 
-		ImGui::Begin("Settings");
-		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "COLOR");
-		ImGui::ColorEdit4("Background Color", reinterpret_cast<float*>(&m_BColor));
-		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "Aspect Ratio");
+		ImGui::Begin("Window Information");
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Aspect Ratio");
 		ImGui::Text("Window Height: %f", static_cast<float>(app->GetWindow().GetHeight()));
 		ImGui::Text("Wondow Width: %f", static_cast<float>(app->GetWindow().GetWidth()));
 		ImGui::Text("Window Aspect Ratio: %f", m_AspectRatio);
+		ImGui::End();
 
-		ImGui::ColorEdit4("Circle Color", reinterpret_cast<float*>(&m_QCColor));
-		ImGui::Text(" ");
+		ImGui::Begin("Player Information");
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Information");
+		ImGui::Text("Player Rotation Angle: %f", m_PlayerRotation);
+		ImGui::Text("Player Size: %f", m_PlayerSize);
+		ImGui::Text("Player Position: { %f, %f, %f }", m_PlayerPosition.x, m_PlayerPosition.y, m_PlayerPosition.z);
+		ImGui::End();
+		
+		ImGui::Begin("Settings");
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "COLOR");
+		ImGui::ColorEdit4("Background Color", reinterpret_cast<float*>(&m_BColor));
+		ImGui::SliderFloat("Circles Color", &m_QCColor, 0.0f, 1.0f);
+		ImGui::Text("");
 
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Camera Settings");
+			if (ImGui::Button("Set Angle to 0."))
+				m_CameraRotation = 0.0f;
+
+		ImGui::Text("");
 		// Player Settings
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Player Settings");
 		ImGui::ColorEdit4("Player Color", reinterpret_cast<float*>(&m_PlayerColor));
@@ -536,7 +541,7 @@ namespace JSG {
 		dispatcher.Dispatch<MouseScrolledEvent>(HZ_BIND_EVENT_FN(Sandbox2D::OnMouseScrolled));
 	}
 
-	bool Sandbox2D::OnMouseScrolled(MouseScrolledEvent& e)
+	bool Sandbox2D::OnMouseScrolled(const MouseScrolledEvent& e)
 	{
 		m_ZoomLevel += e.GetYOffset() * 0.5f;
 		m_ZoomLevel = std::max(m_ZoomLevel, 0.50f);

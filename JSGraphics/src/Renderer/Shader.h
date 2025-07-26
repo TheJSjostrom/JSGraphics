@@ -7,7 +7,6 @@ namespace JSG {
 	class Shader
 	{
 	public:
-		Shader() = default;
 		~Shader();
 
 		void Init(const std::string& vertexScr, const std::string& fragSrc);

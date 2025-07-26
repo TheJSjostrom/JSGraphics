@@ -23,12 +23,13 @@ namespace JSG {
 		virtual void OnImGuiRender() override;
 		virtual void OnEvent(Event& e) override;
 	private:
-		bool OnMouseScrolled(MouseScrolledEvent& e);
+		bool OnMouseScrolled(const MouseScrolledEvent& e);
 	private:
 		float ïVectorRotation = 0.0f;
 		float ÿVectorRotation = -1.0f;
+
 		// Camera
-		float m_ZoomLevel = 5.0f;
+		float m_ZoomLevel = 10.0f;
 		float m_AspectRatio = 0.0f;
 		Camera m_Camera;
 
@@ -48,13 +49,9 @@ namespace JSG {
 		IndexBuffer m_CircleIndexBuffer;
 		Shader m_CircleShader;
 
-		float m_Color = 0.0f;
-		bool m_Switch = true;
-
 		glm::vec3 m_BColor = { 0.009f, 0.018f, 0.039f };
-
 		// Camera
-		glm::vec3 m_CameraForwardDirection = { 0.0f, 1.0f, 0.0f };
+		glm::vec3 m_CameraUpDirection = { 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_CameraPosition = { 0.0f, 0.0f, 0.0f };
 		float m_CameraRotation = 0.0f;
 		float m_CameraVelocity = 10.0f;
@@ -73,8 +70,8 @@ namespace JSG {
 
 		// Circle
 		float m_CircleSize = 2.0f;
-		glm::vec3 m_CircleColor = { 0.912f, 0.080f, 0.080f };
 		glm::vec3 m_CirclePosition = { 5.0f, -5.0f, 0.0f };
+		glm::vec3 m_CircleColor = { 0.912f, 0.080f, 0.080f };
 
 		// Player
 		glm::vec3 m_PlayerPosition = { 0.0f, 0.0f, 0.0f };
@@ -82,10 +79,10 @@ namespace JSG {
 		glm::vec3 m_PlayerForwardDirection = { 1.0f, 0.0f, 0.0f };
 		float m_PlayerVelocity = 10.0f;
 		float m_PlayerSize = 1.0f;
+		float m_PlayerSizeSpeed = 20.0f;
 		float m_PlayerRotation = 0.0f;
 
-
-		float m_QCColor = 1.0f;
+		float m_QCColor = 0.5f;
 		float m_GValue = 0.25f;
 	};
 

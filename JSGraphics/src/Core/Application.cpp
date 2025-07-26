@@ -15,12 +15,12 @@ namespace JSG {
 
 	Application* Application::s_Instance = nullptr;
 
-	Application::Application()
+	Application::Application() : 
+		m_Sandbox2D(std::make_unique<Sandbox2D>())
 	{
 		s_Instance = this;
 		m_Window.SetEventCallback(HZ_BIND_EVENT_FN(Application::OnEvent));
 		ImGuiUI::Init();
-		m_Sandbox2D = std::make_unique<Sandbox2D>();
 	}
 
 	Application::~Application()
@@ -49,8 +49,6 @@ namespace JSG {
 
 	void Application::OnEvent(Event& e)
 	{
-		std::cout << e.GetName() << std::endl;
- 
 		EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(HZ_BIND_EVENT_FN(Application::OnWindowClose));
 		dispatcher.Dispatch<WindowResizeEvent>(HZ_BIND_EVENT_FN(Application::OnWindowResize));

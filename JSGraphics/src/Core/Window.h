@@ -1,7 +1,6 @@
 #pragma once
 #include "Events/Event.h"
 
-#include <string>
 #include <stdint.h>
 #include <GLFW/glfw3.h>
 #include <Functional>
