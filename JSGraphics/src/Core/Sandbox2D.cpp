@@ -11,8 +11,8 @@
 #include "glad/glad.h"
 
 #include "glm/gtc/matrix_transform.hpp"
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 
 namespace JSG {
 
@@ -199,9 +199,12 @@ namespace JSG {
 
 	void Sandbox2D::OnUpdate(float ts)
 	{
+		Application& app = *Application::Get();
+		m_AspectRatio = app.GetWindow().GetWidth() / static_cast<float>(app.GetWindow().GetHeight());
+
 		// Player
-		glm::vec3 PlayerUpDirection = { 0.0f, 0.0f, 1.0f };
-		glm::vec3 PlayerLeftDirection = glm::normalize(glm::cross(PlayerUpDirection, m_PlayerForwardDirection));
+	//	glm::vec3 PlayerUpDirection = { 0.0f, 0.0f, 1.0f };
+	//	glm::vec3 PlayerLeftDirection = glm::normalize(glm::cross(PlayerUpDirection, m_PlayerForwardDirection));
 
 		m_PlayerForwardDirection.x = glm::cos(glm::radians(m_PlayerRotation));
 		m_PlayerForwardDirection.y = glm::sin(glm::radians(m_PlayerRotation));
@@ -210,13 +213,13 @@ namespace JSG {
 
 		if (Input::IsKeyPressed(GLFW_KEY_UP))
 		{
-			m_PlayerPosition.x += m_PlayerForwardDirection.x * m_PlayerVelocity * ts;
-			m_PlayerPosition.y += m_PlayerForwardDirection.y * m_PlayerVelocity * ts;
+			m_PlayerPosition.x += m_PlayerForwardDirection.x * m_CurrentPlayerVelocity * ts;
+			m_PlayerPosition.y += m_PlayerForwardDirection.y * m_CurrentPlayerVelocity * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_DOWN))
 		{
-			m_PlayerPosition.x -= m_PlayerForwardDirection.x * m_PlayerVelocity * ts;
-			m_PlayerPosition.y -= m_PlayerForwardDirection.y * m_PlayerVelocity * ts;
+			m_PlayerPosition.x -= m_PlayerForwardDirection.x * m_CurrentPlayerVelocity * ts;
+			m_PlayerPosition.y -= m_PlayerForwardDirection.y * m_CurrentPlayerVelocity * ts;
 		}
 
 		if (Input::IsKeyPressed(GLFW_KEY_LEFT))
@@ -231,16 +234,15 @@ namespace JSG {
 		if (Input::IsKeyPressed(GLFW_KEY_C))
 		{
 			m_PlayerSize += m_PlayerSizeSpeed * ts;
-			m_PlayerVelocity -= m_PlayerSize;
 		}
- 
 		else if (Input::IsKeyPressed(GLFW_KEY_V))
 		{
 			m_PlayerSize -= m_PlayerSizeSpeed * ts;
-			m_PlayerVelocity += m_PlayerSize;
 		}
- 
-		m_PlayerSize = std::max(m_PlayerSize, 0.5f);
+
+		m_PlayerSize = std::max(m_PlayerSize, 1.0f);
+
+		m_CurrentPlayerVelocity = m_PlayerVelocity / m_PlayerSize;
 
 		// Camera
 		glm::vec3 CameraBackwardDirection = { 0.0f, 0.0f, 1.0f };
@@ -318,9 +320,6 @@ namespace JSG {
 
 	void Sandbox2D::OnRender()
 	{
-		Application& app = *Application::Get();
-		m_AspectRatio = app.GetWindow().GetWidth() / static_cast<float>(app.GetWindow().GetHeight());
-
 		// Clear the the whole scene.
 		glClearColor(m_BColor.x, m_BColor.y, m_BColor.z, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -334,13 +333,13 @@ namespace JSG {
 		//			v
 		// Render a triangle
 		{
+			glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_TrianglePosition)
+								  * glm::rotate(glm::mat4(1.0f), glm::radians(m_TriangleRotation), glm::vec3(0, 0, 1))
+			                      * glm::scale(glm::mat4(1), glm::vec3(m_TriangleSize, m_TriangleSize, m_TriangleSize));
+
 			m_TriangleShader.Bind();
 			m_TriangleShader.SetMat4("u_Proj", projectionMatrix);
 			m_TriangleShader.SetMat4("u_View", viewMatrix);
-
-			glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_TrianglePosition)
-								  * glm::rotate(glm::mat4(1.0f), glm::radians(m_TriangleRotation), glm::vec3(0, 0, 1))
-								  * glm::scale(glm::mat4(1), glm::vec3(m_TriangleSize, m_TriangleSize, m_TriangleSize));
 			m_TriangleShader.SetMat4("u_Model", modelMatrix);
 			m_TriangleShader.SetFloat3("u_Color", m_TriangleColor);
 
@@ -350,13 +349,13 @@ namespace JSG {
 
 		// Render a quad.
 		{
+			glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), m_QuadPosition)
+			    	              * glm::rotate(glm::mat4(1.0f), glm::radians(m_QuadRotation), glm::vec3(0.0f, 0.0f, 1.0f))
+				                  * glm::scale(glm::mat4(1.0f), glm::vec3(m_QuadSize, m_QuadSize, m_QuadSize));
+
 			m_QuadShader.Bind();
 			m_QuadShader.SetMat4("u_Proj", projectionMatrix);
 			m_QuadShader.SetMat4("u_View", viewMatrix);
-			
-			glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), m_QuadPosition)
-								  * glm::rotate(glm::mat4(1.0f), glm::radians(m_QuadRotation), glm::vec3(0.0f, 0.0f, 1.0f))
-				                  * glm::scale(glm::mat4(1.0f), glm::vec3(m_QuadSize, m_QuadSize, m_QuadSize));
 			m_QuadShader.SetMat4("u_Model", modelMatrix);
 			m_CircleShader.SetFloat3("u_Color", m_QuadColor);
 
@@ -366,13 +365,13 @@ namespace JSG {
 
 		// Render a circle.
 		{
-			m_CircleShader.Bind();
-			m_CircleShader.SetMat4("u_Proj", projectionMatrix);
-			m_CircleShader.SetMat4("u_View", viewMatrix);
-
 			glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), m_CirclePosition)
 								  * glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
 							      * glm::scale(glm::mat4(1.0f), glm::vec3(m_CircleSize, m_CircleSize, m_CircleSize));
+
+			m_CircleShader.Bind();
+			m_CircleShader.SetMat4("u_Proj", projectionMatrix);
+			m_CircleShader.SetMat4("u_View", viewMatrix);
 			m_CircleShader.SetMat4("u_Model", modelMatrix);
 			m_CircleShader.SetFloat3("u_Color", m_CircleColor);
 
@@ -382,6 +381,10 @@ namespace JSG {
 		
 		// Render a quad made of circles
 		{
+			m_CircleShader.Bind();
+			m_CircleShader.SetMat4("u_Proj", projectionMatrix);
+			m_CircleShader.SetMat4("u_View", viewMatrix);
+
 			for (uint32_t i = 0; i < 20; i++)
 			{
 				for (uint32_t y = 0; y < 20; y++)
@@ -400,13 +403,13 @@ namespace JSG {
 
 		// Render quad player
 		{
+			glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_PlayerPosition)
+			          	          * glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0, 0, 1))
+				                  * glm::scale(glm::mat4(1), glm::vec3(m_PlayerSize));
+
 			m_QuadShader.Bind();
 			m_QuadShader.SetMat4("u_Proj", projectionMatrix);
 			m_QuadShader.SetMat4("u_View", viewMatrix);
-
-			glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_PlayerPosition)
-				* glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0, 0, 1))
-				* glm::scale(glm::mat4(1), glm::vec3(m_PlayerSize, m_PlayerSize, m_PlayerSize));
 			m_QuadShader.SetMat4("u_Model", modelMatrix);
 			m_QuadShader.SetFloat3("u_Color", m_PlayerColor);
 
@@ -462,7 +465,7 @@ namespace JSG {
 		ImGui::Begin("Player Information");
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Information");
 		ImGui::Text("Player Rotation Angle: %f", m_PlayerRotation);
-		ImGui::Text("Player Size: %f", m_PlayerSize);
+		ImGui::Text("Player Size: %f, %f", m_PlayerSize, (int)m_PlayerSize);
 		ImGui::Text("Player Position: { %f, %f, %f }", m_PlayerPosition.x, m_PlayerPosition.y, m_PlayerPosition.z);
 		ImGui::End();
 		

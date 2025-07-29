@@ -76,11 +76,12 @@ namespace JSG {
 		// Player
 		glm::vec3 m_PlayerPosition = { 0.0f, 0.0f, 0.0f };
 		glm::vec3 m_PlayerColor = { 0.152f, 0.392f, 0.052f };
-		glm::vec3 m_PlayerForwardDirection = { 1.0f, 0.0f, 0.0f };
-		float m_PlayerVelocity = 10.0f;
+		glm::vec3 m_PlayerForwardDirection = { 0.0f, 1.0f, 0.0f };
+		float m_PlayerVelocity = 20.0f;
 		float m_PlayerSize = 1.0f;
 		float m_PlayerSizeSpeed = 20.0f;
-		float m_PlayerRotation = 0.0f;
+		float m_PlayerRotation = 90.0f;
+		float m_CurrentPlayerVelocity = 0.0f;
 
 		float m_QCColor = 0.5f;
 		float m_GValue = 0.25f;
