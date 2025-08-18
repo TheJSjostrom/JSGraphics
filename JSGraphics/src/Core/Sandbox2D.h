@@ -7,6 +7,7 @@
 #include "Renderer/Shader.h"
 #include "Renderer/Buffer.h"
 #include "Renderer/Camera.h"
+#include "Renderer/Circle.h"
 
 #include "glm/glm.hpp"
 
@@ -24,9 +25,9 @@ namespace JSG {
 		virtual void OnEvent(Event& e) override;
 	private:
 		bool OnMouseScrolled(const MouseScrolledEvent& e);
+		bool OnMouseButtonPressed(const MouseButtonPressedEvent& e);
 	private:
-		float ïVectorRotation = 0.0f;
-		float ÿVectorRotation = -1.0f;
+		float m_VectorBAngle = 0.0f;
 
 		// Camera
 		float m_ZoomLevel = 10.0f;
@@ -71,20 +72,31 @@ namespace JSG {
 		// Circle
 		float m_CircleSize = 2.0f;
 		glm::vec3 m_CirclePosition = { 5.0f, -5.0f, 0.0f };
-		glm::vec3 m_CircleColor = { 0.912f, 0.080f, 0.080f };
+		glm::vec3 m_CircleColor = { 0.941f, 1.000f, 0.000f, };
+
+		// Vector Circle
+		std::vector<Circle> m_Circles;
+		float m_VCircleSize = 2.0f;
+		glm::vec3 m_VColor = { 1.0f, 1.0f, 1.0f };
 
 		// Player
-		glm::vec3 m_PlayerPosition = { 0.0f, 0.0f, 0.0f };
-		glm::vec3 m_PlayerColor = { 0.152f, 0.392f, 0.052f };
-		glm::vec3 m_PlayerForwardDirection = { 0.0f, 1.0f, 0.0f };
-		float m_PlayerVelocity = 20.0f;
+		glm::vec3 m_PlayerPosition = { 1.0f, 0.0f, 0.0f };
+		glm::vec3 m_PlayerColor = { 0.941f, 1.000f, 0.000f };
+		glm::vec3 m_PlayerForwardDirection = { 0.0f, 0.0f, 0.0f };
+		float m_PlayerRotationVelocity = 180.0f;
+		float m_PlayerVelocity = 8.0f;
+		float m_PlayerSizeVelocity = 1.0f;
 		float m_PlayerSize = 1.0f;
-		float m_PlayerSizeSpeed = 20.0f;
 		float m_PlayerRotation = 90.0f;
-		float m_CurrentPlayerVelocity = 0.0f;
 
 		float m_QCColor = 0.5f;
 		float m_GValue = 0.25f;
+
+		float m_Dot;
+		// Light source
+		glm::vec3 m_LightColor = { 1.0f, 1.0f, 1.0f };
+
+		glm::vec3 m_Result = { 0.0f, 0.0f, 0.0f };
 	};
 
 }

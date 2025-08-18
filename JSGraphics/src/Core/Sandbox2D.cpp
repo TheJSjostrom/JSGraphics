@@ -12,7 +12,7 @@
 
 #include "glm/gtc/matrix_transform.hpp"
 #include <algorithm>
-#include <iostream>
+#include <print>
 
 namespace JSG {
 
@@ -201,53 +201,59 @@ namespace JSG {
 	{
 		Application& app = *Application::Get();
 		m_AspectRatio = app.GetWindow().GetWidth() / static_cast<float>(app.GetWindow().GetHeight());
-
+	
 		// Player
-	//	glm::vec3 PlayerUpDirection = { 0.0f, 0.0f, 1.0f };
-	//	glm::vec3 PlayerLeftDirection = glm::normalize(glm::cross(PlayerUpDirection, m_PlayerForwardDirection));
+		//glm::vec3 PlayerUpDirection = { 0.0f, 0.0f, 1.0f };
+		//glm::vec3 PlayerLeftDirection = glm::normalize(glm::cross(PlayerUpDirection, m_PlayerForwardDirection));
+		
+		///////////////////////////////
+		///////// PLAYER //////////////
+		///////////////////////////////
 
-		m_PlayerForwardDirection.x = glm::cos(glm::radians(m_PlayerRotation));
-		m_PlayerForwardDirection.y = glm::sin(glm::radians(m_PlayerRotation));
-		m_PlayerForwardDirection.z = 0.0f;
+		m_PlayerForwardDirection = { glm::cos(glm::radians(m_PlayerRotation)), glm::sin(glm::radians(m_PlayerRotation)), 0.0f };
 		m_PlayerForwardDirection = glm::normalize(m_PlayerForwardDirection);
-
+		
 		if (Input::IsKeyPressed(GLFW_KEY_UP))
 		{
-			m_PlayerPosition.x += m_PlayerForwardDirection.x * m_CurrentPlayerVelocity * ts;
-			m_PlayerPosition.y += m_PlayerForwardDirection.y * m_CurrentPlayerVelocity * ts;
+			m_PlayerPosition.x += m_PlayerForwardDirection.x * m_PlayerVelocity * ts;
+			m_PlayerPosition.y += m_PlayerForwardDirection.y * m_PlayerVelocity * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_DOWN))
 		{
-			m_PlayerPosition.x -= m_PlayerForwardDirection.x * m_CurrentPlayerVelocity * ts;
-			m_PlayerPosition.y -= m_PlayerForwardDirection.y * m_CurrentPlayerVelocity * ts;
+			m_PlayerPosition.x -= m_PlayerForwardDirection.x * m_PlayerVelocity * ts;
+			m_PlayerPosition.y -= m_PlayerForwardDirection.y * m_PlayerVelocity * ts;
 		}
 
+
+		// PLAYER ROTATION
 		if (Input::IsKeyPressed(GLFW_KEY_LEFT))
 		{
-			m_PlayerRotation += 180.0f * ts;
+			m_PlayerRotation += m_PlayerRotationVelocity * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_RIGHT))
 		{
-			m_PlayerRotation -= 180.0f * ts;
+			m_PlayerRotation -= m_PlayerRotationVelocity * ts;
 		}
 
-		if (Input::IsKeyPressed(GLFW_KEY_C))
+		// PLAYER SIZE
+		if (Input::IsKeyPressed(GLFW_KEY_LEFT_SHIFT))
 		{
-			m_PlayerSize += m_PlayerSizeSpeed * ts;
+			m_PlayerSize += m_PlayerSizeVelocity * ts;
 		}
-		else if (Input::IsKeyPressed(GLFW_KEY_V))
+		else if (Input::IsKeyPressed(GLFW_KEY_X))
 		{
-			m_PlayerSize -= m_PlayerSizeSpeed * ts;
+			m_PlayerSize -= m_PlayerSizeVelocity * ts;
 		}
 
 		m_PlayerSize = std::max(m_PlayerSize, 1.0f);
+		
+		////////////////////////////////
+		/////////// CAMERA /////////////
+		////////////////////////////////
 
-		m_CurrentPlayerVelocity = m_PlayerVelocity / m_PlayerSize;
-
-		// Camera
 		glm::vec3 CameraBackwardDirection = { 0.0f, 0.0f, 1.0f };
 		glm::vec3 CameraRightDirection = glm::normalize(glm::cross(m_CameraUpDirection, CameraBackwardDirection));
-
+	
 		m_CameraUpDirection.x = glm::cos(glm::radians(m_CameraRotation + 90.0f));
 		m_CameraUpDirection.y = glm::sin(glm::radians(m_CameraRotation + 90.0f));
 		m_CameraUpDirection.z = 0.0f;
@@ -263,7 +269,7 @@ namespace JSG {
 			m_CameraPosition.x -= m_CameraUpDirection.x * m_CameraVelocity * ts;
 			m_CameraPosition.y -= m_CameraUpDirection.y * m_CameraVelocity * ts;
 		}
-
+		
 		if (Input::IsKeyPressed(GLFW_KEY_D))
 		{
 			m_CameraPosition.x += CameraRightDirection.x * m_CameraVelocity * ts;
@@ -284,38 +290,74 @@ namespace JSG {
 			m_CameraRotation -= 180.0f * ts;
 		}
 
-		glm::vec2 ïVector;
-		ïVector.x = 3 * glm::cos(glm::radians(ïVectorRotation));
-		ïVector.y = 3 * glm::sin(glm::radians(ïVectorRotation));
+		if (Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_2))
+		{
+			m_Circles.emplace_back(Circle(m_VCircleSize, m_Camera.GetPosition(), m_VColor));
+		}
+		///////////////////////////////////////
+		////////////// DOT PRODUCT ////////////
+		///////////////////////////////////////
 
-		glm::vec2 ÿVector;
-		ÿVector.x = 2 * glm::cos(glm::radians(ÿVectorRotation));
-		ÿVector.y = 2 * glm::sin(glm::radians(ÿVectorRotation));
+		float vectorAAngle = 45.0f;
+		//float AngleB = -45.0f;
 
-		float det = ïVector.x * ÿVector.y - ÿVector.x * ïVector.y;
+		if (Input::IsKeyPressed(GLFW_KEY_K))
+		{
+			m_VectorBAngle += 180.0f * ts;
+		}
+		else if (Input::IsKeyPressed(GLFW_KEY_L))
+		{
+			m_VectorBAngle -= 180.0f * ts;
+		}
 
+		float ambientStrength = 0.1f;
+		glm::vec3 ambient = ambientStrength * m_LightColor;
+		
+		glm::vec3 VertexPos = { 0.5f, 0.5f, 0.0 };
+		glm::vec3 LightPos = m_PlayerPosition;
+		LightPos = glm::normalize(LightPos);
+
+		glm::vec3 Normal = { 0.0f, 1.0f, 0.0f };
+		Normal = glm::normalize(Normal);
+		float DotProduct = glm::dot(LightPos, Normal);
+		m_Dot = glm::max(DotProduct, 0.0f);
+		glm::vec3 diffuse = m_Dot * m_LightColor;
+
+		m_Result = (diffuse + ambient) * m_PlayerColor;
+
+		std::println("R: {} - G: {} - B: {}", m_PlayerColor.r, m_PlayerColor.g, m_PlayerColor.b);
+		glm::vec2 vectorA = { glm::cos(glm::radians(vectorAAngle)), glm::sin(glm::radians(vectorAAngle)) };
+		vectorA = glm::normalize(vectorA);
+		
+		glm::vec2 vectorB = { glm::cos(glm::radians(m_VectorBAngle)), glm::sin(glm::radians(m_VectorBAngle)) };
+		vectorB = glm::normalize(vectorB);
+		
+		float VectorALength = glm::sqrt(vectorA.x * vectorA.x + vectorA.y * vectorA.y);
+		float VectorBLength = glm::sqrt(vectorB.x * vectorB.x + vectorB.y * vectorB.y);
+		// 0.939692736
+		float dotProductA = glm::sqrt(vectorA.x * vectorA.x + vectorA.y * vectorA.y) 
+						  * glm::sqrt(vectorB.x * vectorB.x + vectorB.y * vectorB.y) * glm::cos(glm::radians(vectorAAngle - m_VectorBAngle));
+		float dotProductB = vectorB.x * vectorA.x + vectorB.y * vectorA.y;
+		//std::println("DotProductA: {} - DotProductB: {} - Angle: {}", dotProductA, dotProductB, m_VectorBAngle);
+		float dotProductC = glm::dot(vectorA, vectorB);
+		float x = 2.0f;
 		// Scaling Matrix
 
 		// Rotation Matrix
-		// x = .999848    y = .017452
-    	//	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(m_Angle), glm::vec3(0.0f, 0.0f, 1.0f));
+		// [cos(45.0f) -sin(45.0f)]  {0.5}
+		// [sin(45.0f)  cos(45.0f)]  {0.5}
+		//
+		// 0.5 * {cos(45.0f)} + 0.5 * {-sin(45.0f)}
+		//       {sin(45.0f)}         { cos(45.0f)}
+    	//	
+		// {0.5 * cos(45.0f)} + {0.5 * -sin(45.0f)}
+		// {0.5 * sin(45.0f)}   {0.5 *  cos(45.0f)}
 		// 
-		// [cos(45.0f) -sin(45.0f)]
-		// [sin(45.0f)  cos(45.0f)]
-		//std::cout << Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_1) << std::endl;
-
-	    //  glm::vec4 position = { 0.5f, 0.5f, 0.0f, 1.0f};
-		
-    	//	glm::vec4 transformedPosition = rotationMatrix * position;
-		// position.x * [cos(45.0f)] + position.y * [-sin(45.0f)]
-		//              [sin(45.0f)]                [ cos(45.0f)]
-
-
-		// TRanslation Matrix.
+		// Translation Matrix.
 		// [1 0 0 2]  {0.5}        {1}       {0}     {0}   {2}       {0.5}   {2} 
 		// [0 1 0 3]  {0.5}	   0.5*{0} + 0.5*{1} + 0*{0} + {3}       {0.5} + {3} 
 		// [0 0 1 0]  {0}          {0}       {0}     {1}   {0}       {0}     {0}
-		//
+		
 	}
 
 	void Sandbox2D::OnRender()
@@ -324,22 +366,44 @@ namespace JSG {
 		glClearColor(m_BColor.x, m_BColor.y, m_BColor.z, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glm::mat4 projectionMatrix = glm::ortho(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel, -1.0f, 1.0f);
+		m_Camera.SetProjectionMatrix(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
+		m_Camera.SetPosition(m_CameraPosition);
+		m_Camera.SetRotation(m_CameraRotation);
+
+		/*
+		const glm::mat4 projectionMatrix = glm::ortho(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel, -1.0f, 1.0f);
 		glm::mat4 viewMatrix = glm::translate(glm::mat4(1), m_CameraPosition) 
 							 * glm::rotate(glm::mat4(1.0f), glm::radians(m_CameraRotation), glm::vec3(0, 0, 1));
 		viewMatrix = glm::inverse(viewMatrix);
-		
+		*/
+
 		// Entities |
 		//			v
+		// Render quad player
+		{
+			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_PlayerPosition)
+										* glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0, 0, 1))
+										* glm::scale(glm::mat4(1), glm::vec3(m_PlayerSize));
+
+			m_QuadShader.Bind();
+			m_QuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
+			m_QuadShader.SetMat4("u_View", m_Camera.GetViewMatrix());
+			m_QuadShader.SetMat4("u_Model", modelMatrix);
+			m_QuadShader.SetFloat3("u_Color", m_Result);
+
+			glBindVertexArray(m_QuadVertexArray);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		}
+		
 		// Render a triangle
 		{
-			glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_TrianglePosition)
-								  * glm::rotate(glm::mat4(1.0f), glm::radians(m_TriangleRotation), glm::vec3(0, 0, 1))
-			                      * glm::scale(glm::mat4(1), glm::vec3(m_TriangleSize, m_TriangleSize, m_TriangleSize));
+			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_TrianglePosition)
+										* glm::rotate(glm::mat4(1.0f), glm::radians(m_TriangleRotation), glm::vec3(0, 0, 1))
+			                            * glm::scale(glm::mat4(1), glm::vec3(m_TriangleSize));
 
 			m_TriangleShader.Bind();
-			m_TriangleShader.SetMat4("u_Proj", projectionMatrix);
-			m_TriangleShader.SetMat4("u_View", viewMatrix);
+			m_TriangleShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
+			m_TriangleShader.SetMat4("u_View", m_Camera.GetViewMatrix());
 			m_TriangleShader.SetMat4("u_Model", modelMatrix);
 			m_TriangleShader.SetFloat3("u_Color", m_TriangleColor);
 
@@ -349,13 +413,13 @@ namespace JSG {
 
 		// Render a quad.
 		{
-			glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), m_QuadPosition)
-			    	              * glm::rotate(glm::mat4(1.0f), glm::radians(m_QuadRotation), glm::vec3(0.0f, 0.0f, 1.0f))
-				                  * glm::scale(glm::mat4(1.0f), glm::vec3(m_QuadSize, m_QuadSize, m_QuadSize));
+			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), m_QuadPosition)
+			    	                    * glm::rotate(glm::mat4(1.0f), glm::radians(m_QuadRotation), glm::vec3(0.0f, 0.0f, 1.0f))
+				                        * glm::scale(glm::mat4(1.0f), glm::vec3(m_QuadSize));
 
 			m_QuadShader.Bind();
-			m_QuadShader.SetMat4("u_Proj", projectionMatrix);
-			m_QuadShader.SetMat4("u_View", viewMatrix);
+			m_QuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
+			m_QuadShader.SetMat4("u_View", m_Camera.GetViewMatrix());
 			m_QuadShader.SetMat4("u_Model", modelMatrix);
 			m_CircleShader.SetFloat3("u_Color", m_QuadColor);
 
@@ -365,13 +429,13 @@ namespace JSG {
 
 		// Render a circle.
 		{
-			glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), m_CirclePosition)
-								  * glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
-							      * glm::scale(glm::mat4(1.0f), glm::vec3(m_CircleSize, m_CircleSize, m_CircleSize));
+			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), m_CirclePosition)
+								        * glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
+							            * glm::scale(glm::mat4(1.0f), glm::vec3(m_CircleSize));
 
 			m_CircleShader.Bind();
-			m_CircleShader.SetMat4("u_Proj", projectionMatrix);
-			m_CircleShader.SetMat4("u_View", viewMatrix);
+			m_CircleShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
+			m_CircleShader.SetMat4("u_View", m_Camera.GetViewMatrix());
 			m_CircleShader.SetMat4("u_Model", modelMatrix);
 			m_CircleShader.SetFloat3("u_Color", m_CircleColor);
 
@@ -379,19 +443,38 @@ namespace JSG {
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		}
 		
+		// Render circles from the vector
+		m_CircleShader.Bind();
+		m_CircleShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
+		m_CircleShader.SetMat4("u_View", m_Camera.GetViewMatrix());
+
+		for (size_t i = 0; i < m_Circles.size(); i++)
+		{
+			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_Circles[i].GetPosition())
+										* glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
+										* glm::scale(glm::mat4(1), glm::vec3(m_Circles[i].GetSize()));
+
+			m_CircleShader.SetMat4("u_Model", modelMatrix);
+			m_CircleShader.SetFloat3("u_Color", m_Circles[i].GetColor());
+
+			glBindVertexArray(m_CircleVertexArray);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		}
+
+
 		// Render a quad made of circles
 		{
 			m_CircleShader.Bind();
-			m_CircleShader.SetMat4("u_Proj", projectionMatrix);
-			m_CircleShader.SetMat4("u_View", viewMatrix);
+			m_CircleShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
+			m_CircleShader.SetMat4("u_View", m_Camera.GetViewMatrix());
 
 			for (uint32_t i = 0; i < 20; i++)
 			{
 				for (uint32_t y = 0; y < 20; y++)
 				{
-					glm::mat4 modelMatrix = glm::translate(glm::mat4(1), {i, y, 0.0f}) 
-										  * glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)) 
-										  * glm::scale(glm::mat4(1), glm::vec3(0.5f, 0.5f, 0.5f));
+					const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), {i, y, 0.0f}) 
+										        * glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)) 
+										        * glm::scale(glm::mat4(1), glm::vec3(0.5f, 0.5f, 0.5f));
 					m_CircleShader.SetMat4("u_Model", modelMatrix);
 					m_CircleShader.SetFloat3("u_Color", { m_QCColor, 0.0f, 0.1f * i});
 
@@ -399,22 +482,6 @@ namespace JSG {
 					glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 				}
 			}
-		}
-
-		// Render quad player
-		{
-			glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_PlayerPosition)
-			          	          * glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0, 0, 1))
-				                  * glm::scale(glm::mat4(1), glm::vec3(m_PlayerSize));
-
-			m_QuadShader.Bind();
-			m_QuadShader.SetMat4("u_Proj", projectionMatrix);
-			m_QuadShader.SetMat4("u_View", viewMatrix);
-			m_QuadShader.SetMat4("u_Model", modelMatrix);
-			m_QuadShader.SetFloat3("u_Color", m_PlayerColor);
-
-			glBindVertexArray(m_QuadVertexArray);
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		}
 
 		// Render a dot in origo
@@ -443,33 +510,43 @@ namespace JSG {
 		Application* app = Application::Get();
 
 		//ImGui::ShowDemoWindow();
-		ImGui::Begin("Camera Information");
-		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "CAMERA CONTROLS");
-		ImGui::Text("Move the camera around: WASD");
+
+		// Camera
+		ImGui::Begin("CAMERA");
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "CONTROLS");
+		ImGui::Text("Move around: WASD");
 		ImGui::Text("Zoom in and out: Mouse Scroll Wheel");
-		ImGui::Text("Rotate the camera: QE");
+		ImGui::Text("Rotate: QE");
 		ImGui::Text(" ");
-		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "CAMERA INFORMATION");
-		ImGui::Text("Camera Rotation Angle: %f", m_CameraRotation);
-		ImGui::Text("Camera Zoom Level: %f", m_ZoomLevel);
-		ImGui::Text("Camera Position: { %f, %f, %f }", m_CameraPosition.x, m_CameraPosition.y, m_CameraPosition.z);
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "INFORMATION");
+		ImGui::Text("Rotation Angle: %f", m_CameraRotation);
+		ImGui::Text("Zoom Level: %f", m_ZoomLevel);
+		ImGui::Text("Position: { %f, %f }", m_CameraPosition.x, m_CameraPosition.y);
 		ImGui::End();
 
-		ImGui::Begin("Window Information");
-		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Aspect Ratio");
+		// Player
+		ImGui::Begin("PLAYER");
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "CONTROLS");
+		ImGui::Text("Move forward & backward: Up & Down arrow keys.");
+		ImGui::Text("Change Direction: Left & Right arrow key.");
+		ImGui::Text(" ");
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "INFORMATION");
+		ImGui::Text("Rotation Angle: %f", m_PlayerRotation);
+		ImGui::Text("Size: %f", m_PlayerSize);
+		ImGui::Text("Speed: %funits/s", m_PlayerVelocity*60.0f);
+		ImGui::Text("Position: { %f, %f }", m_PlayerPosition.x, m_PlayerPosition.y);
+		ImGui::End();
+		
+		// Window
+		ImGui::Begin("WINDOW");
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "INFORMATION");
 		ImGui::Text("Window Height: %f", static_cast<float>(app->GetWindow().GetHeight()));
 		ImGui::Text("Wondow Width: %f", static_cast<float>(app->GetWindow().GetWidth()));
 		ImGui::Text("Window Aspect Ratio: %f", m_AspectRatio);
 		ImGui::End();
 
-		ImGui::Begin("Player Information");
-		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Information");
-		ImGui::Text("Player Rotation Angle: %f", m_PlayerRotation);
-		ImGui::Text("Player Size: %f, %f", m_PlayerSize, (int)m_PlayerSize);
-		ImGui::Text("Player Position: { %f, %f, %f }", m_PlayerPosition.x, m_PlayerPosition.y, m_PlayerPosition.z);
-		ImGui::End();
-		
-		ImGui::Begin("Settings");
+		// Edit tool
+		ImGui::Begin("Edit Tool");
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "COLOR");
 		ImGui::ColorEdit4("Background Color", reinterpret_cast<float*>(&m_BColor));
 		ImGui::SliderFloat("Circles Color", &m_QCColor, 0.0f, 1.0f);
@@ -479,7 +556,15 @@ namespace JSG {
 			if (ImGui::Button("Set Angle to 0."))
 				m_CameraRotation = 0.0f;
 
+		ImGui::SliderFloat("Size", &m_VCircleSize, 0.5f, 10.0f);
+		ImGui::ColorEdit4("VCircle Color", reinterpret_cast<float*>(&m_VColor));
+	    ImGui::Text("Number of circles: %d", static_cast<int>(m_Circles.size()));
+		if (ImGui::Button("Clear Circles."))
+		{
+			m_Circles.clear();
+		}
 		ImGui::Text("");
+
 		// Player Settings
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Player Settings");
 		ImGui::ColorEdit4("Player Color", reinterpret_cast<float*>(&m_PlayerColor));
@@ -542,6 +627,7 @@ namespace JSG {
 	{
 		EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<MouseScrolledEvent>(HZ_BIND_EVENT_FN(Sandbox2D::OnMouseScrolled));
+		dispatcher.Dispatch<MouseButtonPressedEvent>(HZ_BIND_EVENT_FN(Sandbox2D::OnMouseButtonPressed));
 	}
 
 	bool Sandbox2D::OnMouseScrolled(const MouseScrolledEvent& e)
@@ -550,4 +636,14 @@ namespace JSG {
 		m_ZoomLevel = std::max(m_ZoomLevel, 0.50f);
 		return false;
 	}
+
+	bool Sandbox2D::OnMouseButtonPressed(const MouseButtonPressedEvent& e)
+	{
+		/*
+		if (GLFW_MOUSE_BUTTON_2 == e.GetMouseButton())
+			m_Circles.emplace_back(Circle(m_VCircleSize, m_Camera.GetPosition(), m_VColor));
+		*/
+		return false;
+	}
+
 }
