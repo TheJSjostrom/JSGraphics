@@ -29,12 +29,20 @@ namespace JSG {
 	private:
 		float m_VectorBAngle = 0.0f;
 
+		float m_VectorRotation = 45.0f;
+		glm::vec3 m_Vector = { 0.0f, 0.0f, 0.0f };
+
 		// Camera
 		float m_ZoomLevel = 10.0f;
 		float m_AspectRatio = 0.0f;
 		Camera m_Camera;
 
 		// Shader Data
+		uint32_t m_LightCubeVertexArray;
+		VertexBuffer m_LightCubeVertexBuffer;
+		IndexBuffer m_LightCubeIndexBuffer;
+		Shader m_LightCubeShader;
+
 		uint32_t m_TriangleVertexArray;
 		VertexBuffer m_TriangleVertexBuffer;
 		IndexBuffer m_TriangleIndexBuffer;
@@ -51,6 +59,7 @@ namespace JSG {
 		Shader m_CircleShader;
 
 		glm::vec3 m_BColor = { 0.009f, 0.018f, 0.039f };
+
 		// Camera
 		glm::vec3 m_CameraUpDirection = { 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_CameraPosition = { 0.0f, 0.0f, 0.0f };
@@ -74,13 +83,23 @@ namespace JSG {
 		glm::vec3 m_CirclePosition = { 5.0f, -5.0f, 0.0f };
 		glm::vec3 m_CircleColor = { 0.941f, 1.000f, 0.000f, };
 
-		// Vector Circle
+		// Vector Circles
 		std::vector<Circle> m_Circles;
 		float m_VCircleSize = 2.0f;
 		glm::vec3 m_VColor = { 1.0f, 1.0f, 1.0f };
 
+		float m_Angle = 0.0f;
+
+		// Enemy
+		glm::vec3 m_EnemyPosition = { 0.0f, 1.0f, 0.0f };
+		glm::vec3 m_EnemyColor = { 1.0f, 0.0f, 0.0f };
+		glm::vec3 m_EnemyForwardDirection = { 0.0f, 0.0f, 0.0f };
+		float m_EnemyFOVAngle = 45.0f;
+		float m_EnemyRotation = 90.0f;
+		float m_EnemySize = 1.0f;
+
 		// Player
-		glm::vec3 m_PlayerPosition = { 1.0f, 0.0f, 0.0f };
+		glm::vec3 m_PlayerPosition = { 1.0f, 2.0f, 0.0f };
 		glm::vec3 m_PlayerColor = { 0.941f, 1.000f, 0.000f };
 		glm::vec3 m_PlayerForwardDirection = { 0.0f, 0.0f, 0.0f };
 		float m_PlayerRotationVelocity = 180.0f;
@@ -90,13 +109,14 @@ namespace JSG {
 		float m_PlayerRotation = 90.0f;
 
 		float m_QCColor = 0.5f;
-		float m_GValue = 0.25f;
 
-		float m_Dot;
-		// Light source
+		// Light Cube
 		glm::vec3 m_LightColor = { 1.0f, 1.0f, 1.0f };
-
+		glm::vec3 m_LigthDirection = { 1.0f, 0.0f, 0.0f };
+		glm::vec3 m_LightCubePosition = { -1.0f, -1.0f, 0.0f };
+		float m_LightCubeAngle = 0.0f;
 		glm::vec3 m_Result = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 m_LightPosition = { 0.0f, 0.0f, 0.0f };
 	};
 
 }

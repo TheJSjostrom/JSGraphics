@@ -13,6 +13,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include <algorithm>
 #include <print>
+#include <iostream>
 
 namespace JSG {
 
@@ -21,6 +22,60 @@ namespace JSG {
 	{
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		/////////////////////////////////
+		///////// Light Cube ////////////
+		/////////////////////////////////
+
+		glCreateVertexArrays(1, &m_LightCubeVertexArray);
+		glBindVertexArray(m_LightCubeVertexArray);
+
+		float LightCubeVertices[4 * 3] = {
+			// Vertex Position
+			   -0.5f, -0.5f, 0.0f,
+				0.5f, -0.5f, 0.0f,
+				0.5f,  0.5f, 0.0f,
+			   -0.5f,  0.5f, 0.0f
+		};
+
+		m_LightCubeVertexBuffer.Init(sizeof(LightCubeVertices), LightCubeVertices);
+		m_LightCubeVertexBuffer.Bind();
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+
+		uint32_t LightCubeIndices[6] = { 0, 1, 2, 2, 3, 0 };
+		m_LightCubeIndexBuffer.Init(sizeof(LightCubeIndices), LightCubeIndices);
+		m_LightCubeIndexBuffer.Bind();
+
+		const std::string LightCubeVertexSrc = R"(
+			#version 330 core
+			
+			layout(location = 0) in vec3 a_Position;
+
+			uniform mat4 u_Proj;
+			uniform mat4 u_View;
+			uniform mat4 u_Model;
+
+			void main()
+			{
+				gl_Position = u_Proj * u_View * u_Model * vec4(a_Position, 1.0);
+			}
+		)";
+
+		const std::string LightCubeFragSrc = R"(
+			#version 330 core
+			
+			layout(location = 0) out vec4 color;
+
+			void main()
+			{ 
+				color = vec4(1.0);
+			}
+		)";
+
+		m_LightCubeShader.Init(LightCubeVertexSrc, LightCubeFragSrc);
+		m_LightCubeShader.Bind();
 
 		// Triangle
 		glCreateVertexArrays(1, &m_TriangleVertexArray);
@@ -206,6 +261,27 @@ namespace JSG {
 		//glm::vec3 PlayerUpDirection = { 0.0f, 0.0f, 1.0f };
 		//glm::vec3 PlayerLeftDirection = glm::normalize(glm::cross(PlayerUpDirection, m_PlayerForwardDirection));
 		
+		// cos(v) = X koordinat
+		// sin(v) = Y koordinat
+		m_Vector = { glm::cos(glm::radians(m_VectorRotation)), glm::sin(glm::radians(m_VectorRotation)), 0.0f };
+
+		///////////////////////////////////
+		///////// LIGHT CUBE //////////////
+		///////////////////////////////////
+		
+		m_LigthDirection = { glm::cos(glm::radians(m_LightCubeAngle)), glm::sin(glm::radians(m_LightCubeAngle)), 0.0f };
+		m_LigthDirection = glm::normalize(m_LigthDirection);
+
+		m_LightPosition = { -3.0f, glm::sin(glm::radians(m_LightCubeAngle)) * 5.0f, 0.0f };
+		m_LightCubeAngle += 180.0f * ts;
+
+		/*
+		if (Input::IsKeyPressed(GLFW_KEY_F))
+			m_LightCubeAngle += 180.0f * ts;
+		else if (Input::IsKeyPressed(GLFW_KEY_H))
+			m_LightCubeAngle -= 180.0f * ts;
+		*/
+
 		///////////////////////////////
 		///////// PLAYER //////////////
 		///////////////////////////////
@@ -223,7 +299,6 @@ namespace JSG {
 			m_PlayerPosition.x -= m_PlayerForwardDirection.x * m_PlayerVelocity * ts;
 			m_PlayerPosition.y -= m_PlayerForwardDirection.y * m_PlayerVelocity * ts;
 		}
-
 
 		// PLAYER ROTATION
 		if (Input::IsKeyPressed(GLFW_KEY_LEFT))
@@ -246,7 +321,41 @@ namespace JSG {
 		}
 
 		m_PlayerSize = std::max(m_PlayerSize, 1.0f);
+	
+		////////////////////////////////
+		/////////// ENEMY /////////////
+		///////////////////////////////
+
+		if (Input::IsKeyPressed(GLFW_KEY_F))
+		{
+			m_EnemyRotation += 180.0f * ts;
+		}
+		else if (Input::IsKeyPressed(GLFW_KEY_G))
+		{
+			m_EnemyRotation -= 180.0f * ts;
+		}
+
+		// Geometric interpretation - Algebraic interpretation
+		//         Scalar Projection
+		//        |              | cos(180) = -2/2
+		// ||A|| * ||B|| * cos(0) = A.x * B.x + A.y * B.y = A . B <- Dot Product
+
+		m_EnemyForwardDirection = { glm::cos(glm::radians(m_EnemyRotation)), glm::sin(glm::radians(m_EnemyRotation)), 0.0f };
+		m_EnemyForwardDirection = glm::normalize(m_EnemyForwardDirection);
+
+		const glm::vec3 positionDiff = glm::normalize(m_PlayerPosition - m_EnemyPosition);
+		const float dotProduct = glm::dot(m_EnemyForwardDirection, positionDiff);
+		m_Angle = glm::degrees(glm::acos(dotProduct / (glm::length(positionDiff) * glm::length(m_EnemyForwardDirection))));
 		
+		if (m_Angle <= m_EnemyFOVAngle)
+		{
+			m_PlayerColor = { 1.0f, 0.0f, 0.0f };
+		}
+		else if (m_Angle > m_EnemyFOVAngle)
+		{
+			m_PlayerColor = { 0.0f, 1.0f, 0.0f };
+		}
+ 
 		////////////////////////////////
 		/////////// CAMERA /////////////
 		////////////////////////////////
@@ -254,9 +363,7 @@ namespace JSG {
 		glm::vec3 CameraBackwardDirection = { 0.0f, 0.0f, 1.0f };
 		glm::vec3 CameraRightDirection = glm::normalize(glm::cross(m_CameraUpDirection, CameraBackwardDirection));
 	
-		m_CameraUpDirection.x = glm::cos(glm::radians(m_CameraRotation + 90.0f));
-		m_CameraUpDirection.y = glm::sin(glm::radians(m_CameraRotation + 90.0f));
-		m_CameraUpDirection.z = 0.0f;
+		m_CameraUpDirection = { glm::cos(glm::radians(m_CameraRotation + 90.0f)), glm::sin(glm::radians(m_CameraRotation + 90.0f)), 0.0f };
 		m_CameraUpDirection = glm::normalize(m_CameraUpDirection);
 
 		if (Input::IsKeyPressed(GLFW_KEY_W)) 
@@ -290,57 +397,19 @@ namespace JSG {
 			m_CameraRotation -= 180.0f * ts;
 		}
 
-		if (Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_2))
-		{
-			m_Circles.emplace_back(Circle(m_VCircleSize, m_Camera.GetPosition(), m_VColor));
-		}
 		///////////////////////////////////////
 		////////////// DOT PRODUCT ////////////
 		///////////////////////////////////////
 
-		float vectorAAngle = 45.0f;
-		//float AngleB = -45.0f;
-
-		if (Input::IsKeyPressed(GLFW_KEY_K))
-		{
-			m_VectorBAngle += 180.0f * ts;
-		}
-		else if (Input::IsKeyPressed(GLFW_KEY_L))
-		{
-			m_VectorBAngle -= 180.0f * ts;
-		}
-
-		float ambientStrength = 0.1f;
+		float ambientStrength = 0.05f;
 		glm::vec3 ambient = ambientStrength * m_LightColor;
 		
-		glm::vec3 VertexPos = { 0.5f, 0.5f, 0.0 };
-		glm::vec3 LightPos = m_PlayerPosition;
-		LightPos = glm::normalize(LightPos);
-
-		glm::vec3 Normal = { 0.0f, 1.0f, 0.0f };
-		Normal = glm::normalize(Normal);
-		float DotProduct = glm::dot(LightPos, Normal);
-		m_Dot = glm::max(DotProduct, 0.0f);
-		glm::vec3 diffuse = m_Dot * m_LightColor;
-
+		glm::vec3 playerPosDir = glm::normalize(m_PlayerPosition - m_EnemyPosition);
+		float diff = glm::max(glm::dot(m_LigthDirection, playerPosDir), 0.0f);
+		glm::vec3 diffuse = diff * m_LightColor;
+		
 		m_Result = (diffuse + ambient) * m_PlayerColor;
 
-		std::println("R: {} - G: {} - B: {}", m_PlayerColor.r, m_PlayerColor.g, m_PlayerColor.b);
-		glm::vec2 vectorA = { glm::cos(glm::radians(vectorAAngle)), glm::sin(glm::radians(vectorAAngle)) };
-		vectorA = glm::normalize(vectorA);
-		
-		glm::vec2 vectorB = { glm::cos(glm::radians(m_VectorBAngle)), glm::sin(glm::radians(m_VectorBAngle)) };
-		vectorB = glm::normalize(vectorB);
-		
-		float VectorALength = glm::sqrt(vectorA.x * vectorA.x + vectorA.y * vectorA.y);
-		float VectorBLength = glm::sqrt(vectorB.x * vectorB.x + vectorB.y * vectorB.y);
-		// 0.939692736
-		float dotProductA = glm::sqrt(vectorA.x * vectorA.x + vectorA.y * vectorA.y) 
-						  * glm::sqrt(vectorB.x * vectorB.x + vectorB.y * vectorB.y) * glm::cos(glm::radians(vectorAAngle - m_VectorBAngle));
-		float dotProductB = vectorB.x * vectorA.x + vectorB.y * vectorA.y;
-		//std::println("DotProductA: {} - DotProductB: {} - Angle: {}", dotProductA, dotProductB, m_VectorBAngle);
-		float dotProductC = glm::dot(vectorA, vectorB);
-		float x = 2.0f;
 		// Scaling Matrix
 
 		// Rotation Matrix
@@ -379,6 +448,22 @@ namespace JSG {
 
 		// Entities |
 		//			v
+		// Render Light Cube
+		{
+			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_LightPosition)
+										* glm::rotate(glm::mat4(1.0f), glm::radians(m_LightCubeAngle), glm::vec3(0, 0, 1))
+										* glm::scale(glm::mat4(1), glm::vec3(0.5f));
+
+			m_LightCubeShader.Bind();
+			m_LightCubeShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
+			m_LightCubeShader.SetMat4("u_View", m_Camera.GetViewMatrix());
+			m_LightCubeShader.SetMat4("u_Model", modelMatrix);
+			//m_LightCubeShader.SetFloat3("u_Color", m_Result);
+
+			glBindVertexArray(m_LightCubeVertexArray);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		}
+		
 		// Render quad player
 		{
 			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_PlayerPosition)
@@ -395,6 +480,22 @@ namespace JSG {
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		}
 		
+		// Render quad Enemy
+		{
+			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_EnemyPosition)
+										* glm::rotate(glm::mat4(1.0f), glm::radians(m_EnemyRotation), glm::vec3(0, 0, 1))
+										* glm::scale(glm::mat4(1), glm::vec3(m_EnemySize));
+
+			m_QuadShader.Bind();
+			m_QuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
+			m_QuadShader.SetMat4("u_View", m_Camera.GetViewMatrix());
+			m_QuadShader.SetMat4("u_Model", modelMatrix);
+			m_QuadShader.SetFloat3("u_Color", m_EnemyColor);
+
+			glBindVertexArray(m_QuadVertexArray);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		}
+
 		// Render a triangle
 		{
 			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_TrianglePosition)
@@ -509,7 +610,14 @@ namespace JSG {
 	{
 		Application* app = Application::Get();
 
-		//ImGui::ShowDemoWindow();
+		// TODO: UPPDATERA EDIT TOOL!
+
+		//V1 info
+		ImGui::Begin("V1");
+		ImGui::SliderFloat("Rotation slider", &m_VectorRotation, 0.0f, 360.0f);
+		ImGui::Text("X-coord: cos(%f) = %f", m_VectorRotation, m_Vector.x);
+		ImGui::Text("Y-coord: sin(%f) = %f", m_VectorRotation, m_Vector.y);
+		ImGui::End();
 
 		// Camera
 		ImGui::Begin("CAMERA");
@@ -639,10 +747,9 @@ namespace JSG {
 
 	bool Sandbox2D::OnMouseButtonPressed(const MouseButtonPressedEvent& e)
 	{
-		/*
 		if (GLFW_MOUSE_BUTTON_2 == e.GetMouseButton())
 			m_Circles.emplace_back(Circle(m_VCircleSize, m_Camera.GetPosition(), m_VColor));
-		*/
+		
 		return false;
 	}
 

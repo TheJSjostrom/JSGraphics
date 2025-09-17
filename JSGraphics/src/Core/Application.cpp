@@ -30,6 +30,7 @@ namespace JSG {
 
 	void Application::Run()
 	{
+		// Application Loop
 		while (m_Running)
 		{
 			float time = static_cast<float>(glfwGetTime());
