@@ -26,6 +26,7 @@ namespace JSG {
 	private:
 		bool OnMouseScrolled(const MouseScrolledEvent& e);
 		bool OnMouseButtonPressed(const MouseButtonPressedEvent& e);
+		const glm::vec3 CalculateLighting(const glm::vec3& position, const glm::vec3& color);
 	private:
 		float m_VectorBAngle = 0.0f;
 
@@ -94,29 +95,31 @@ namespace JSG {
 		glm::vec3 m_EnemyPosition = { 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_EnemyColor = { 1.0f, 0.0f, 0.0f };
 		glm::vec3 m_EnemyForwardDirection = { 0.0f, 0.0f, 0.0f };
+		float m_EnemyVelocity = 8.0f;
+		float m_EnemyFOVRange = 4.0f;
 		float m_EnemyFOVAngle = 45.0f;
 		float m_EnemyRotation = 90.0f;
 		float m_EnemySize = 1.0f;
+		glm::vec3 m_Result2 = { 0.0f, 0.0f, 0.0f };
 
 		// Player
 		glm::vec3 m_PlayerPosition = { 1.0f, 2.0f, 0.0f };
-		glm::vec3 m_PlayerColor = { 0.941f, 1.000f, 0.000f };
+		glm::vec3 m_PlayerColor = { 0.0f, 0.0f, 0.0f };
 		glm::vec3 m_PlayerForwardDirection = { 0.0f, 0.0f, 0.0f };
 		float m_PlayerRotationVelocity = 180.0f;
 		float m_PlayerVelocity = 8.0f;
 		float m_PlayerSizeVelocity = 1.0f;
-		float m_PlayerSize = 1.0f;
+		float m_PlayerSize = 50.0f;
 		float m_PlayerRotation = 90.0f;
-
+		glm::vec3 m_Result = { 0.0f, 0.0f, 0.0f };
 		float m_QCColor = 0.5f;
 
 		// Light Cube
 		glm::vec3 m_LightColor = { 1.0f, 1.0f, 1.0f };
-		glm::vec3 m_LigthDirection = { 1.0f, 0.0f, 0.0f };
-		glm::vec3 m_LightCubePosition = { -1.0f, -1.0f, 0.0f };
-		float m_LightCubeAngle = 0.0f;
-		glm::vec3 m_Result = { 0.0f, 0.0f, 0.0f };
-		glm::vec3 m_LightPosition = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 m_LigthDirection = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 m_LightCubePosition = { 0.0f, 1.0f, 0.0f };
+		float m_LightCubeAngle = 90.0f;
+
 	};
 
 }
