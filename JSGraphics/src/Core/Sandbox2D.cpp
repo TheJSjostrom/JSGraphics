@@ -185,22 +185,30 @@ namespace JSG {
 			uniform vec3 u_LigthDirection;			
 			uniform vec3 u_LightColor;
 			uniform vec3 u_ObjectColor;			
+			uniform vec3 u_viewPos;
 
 			in vec3 FragPos;
-			out vec3 Normal;
+			in vec3 Normal;
 
 			void main()
 			{ 
-				float ambientStrength = 0.05f;
+				float ambientStrength = 0.001f;
 				vec3 ambient = ambientStrength * u_LightColor;
 
-				vec3 playerPosDir = normalize(FragPos - u_LightPos);
-				float diff = max(dot(u_LigthDirection, playerPosDir), 0.0f);
-
-				float angle = degrees(acos(diff / (length(u_LigthDirection) * length(playerPosDir))));
+				vec3 playerDir = normalize(u_LightPos - FragPos);
+				float diff = max(dot(Normal, playerDir), 0.0f);
+ 
 				vec3 diffuse = diff * u_LightColor;
 
-				vec3 result = (diffuse + ambient) * u_ObjectColor;
+				float specularStrength = 0.5;
+				vec3 viewDir = normalize(u_LightPos - FragPos);
+				vec3 reflectDir = reflect(-u_LigthDirection, Normal);  
+				float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+				float angle = degrees(acos(diff / (length(viewDir) * length(reflectDir))));
+		
+				vec3 specular = specularStrength * spec * u_LightColor; 
+
+				vec3 result = (diffuse + ambient + specular) * u_ObjectColor;
 			
 				color = vec4(result, 1.0);
 			}
@@ -296,19 +304,30 @@ namespace JSG {
 		///////// LIGHT CUBE //////////////
 		///////////////////////////////////
 		
-		m_LigthDirection = { glm::cos(glm::radians(m_LightCubeAngle)), glm::sin(glm::radians(m_LightCubeAngle)), 0.0f };
-		m_LigthDirection = glm::normalize(m_LigthDirection);
+		m_LigthCubeDirection = { glm::cos(glm::radians(m_LightCubeAngle)), glm::sin(glm::radians(m_LightCubeAngle)), 0.0f };
+		m_LigthCubeDirection = glm::normalize(m_LigthCubeDirection);
 
 		if (Input::IsKeyPressed(GLFW_KEY_T))
 		{
-			m_LightCubePosition.x += m_LigthDirection.x * 8.0f * ts;
-			m_LightCubePosition.y += m_LigthDirection.y * 8.0f * ts;
+			m_LightCubePosition.x += m_LigthCubeDirection.x * 8.0f * ts;
+			m_LightCubePosition.y += m_LigthCubeDirection.y * 8.0f * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_G))
 		{
-			m_LightCubePosition.x -= m_LigthDirection.x * 8.0f * ts;
-			m_LightCubePosition.y -= m_LigthDirection.y * 8.0f * ts;
+			m_LightCubePosition.x -= m_LigthCubeDirection.x * 8.0f * ts;
+			m_LightCubePosition.y -= m_LigthCubeDirection.y * 8.0f * ts;
 		}
+
+		if (Input::IsKeyPressed(GLFW_KEY_Y))
+		{
+			m_LightCubePosition.z += 8.0f * ts;
+		}
+		else if (Input::IsKeyPressed(GLFW_KEY_U))
+		{
+			m_LightCubePosition.z -=  8.0f * ts;
+		}
+
+		m_LightCubePosition.z = glm::max(m_LightCubePosition.z, 0.0f);
 
 		if (Input::IsKeyPressed(GLFW_KEY_F))
 			m_LightCubeAngle += 180.0f * ts;
@@ -395,7 +414,7 @@ namespace JSG {
 		const glm::vec3 NormalizePositionDiff = glm::normalize(positionDiff);
 		const float dotProduct = glm::dot(m_EnemyForwardDirection, NormalizePositionDiff);
 		m_Angle = glm::degrees(glm::acos(dotProduct / (glm::length(NormalizePositionDiff) * glm::length(m_EnemyForwardDirection))));
-		
+
 		if (m_Angle <= m_EnemyFOVAngle && glm::length(positionDiff) <= m_EnemyFOVRange)
 		{
 			m_PlayerColor = { 1.0f, 0.0f, 0.0f };
@@ -491,6 +510,25 @@ namespace JSG {
 
 		// Entities |
 		//			v
+		// Render Quad Floor.
+		{
+			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_FloorPosition)
+										* glm::rotate(glm::mat4(1.0f), glm::radians(m_FloorRotation), glm::vec3(0, 0, 1))
+										* glm::scale(glm::mat4(1), glm::vec3(m_FloorSize));
+
+			m_QuadShader.Bind();
+			m_QuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
+			m_QuadShader.SetMat4("u_View", m_Camera.GetViewMatrix());
+			m_QuadShader.SetMat4("u_Model", modelMatrix);
+			m_QuadShader.SetFloat3("u_LightPos", m_LightCubePosition);
+			m_QuadShader.SetFloat3("u_LigthDirection", m_LigthCubeDirection);
+			m_QuadShader.SetFloat3("u_LightColor", m_LightCubeColor);
+			m_QuadShader.SetFloat3("u_ObjectColor", m_FloorColor);
+			m_QuadShader.SetFloat3("viewPos", m_Camera.GetPosition());
+			glBindVertexArray(m_QuadVertexArray);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		}
+
 		// Render quad player
 		{
 			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_PlayerPosition)
@@ -502,11 +540,10 @@ namespace JSG {
 			m_QuadShader.SetMat4("u_View", m_Camera.GetViewMatrix());
 			m_QuadShader.SetMat4("u_Model", modelMatrix);
 			m_QuadShader.SetFloat3("u_LightPos", m_LightCubePosition);
-			m_QuadShader.SetFloat3("u_LigthDirection", m_LigthDirection);
-			m_QuadShader.SetFloat3("u_LightColor", m_LightColor);
+			m_QuadShader.SetFloat3("u_LigthDirection", m_LigthCubeDirection);
+			m_QuadShader.SetFloat3("u_LightColor", m_LightCubeColor);
 			m_QuadShader.SetFloat3("u_ObjectColor", m_PlayerColor);
-
-
+			m_QuadShader.SetFloat3("viewPos", m_Camera.GetPosition());
 			glBindVertexArray(m_QuadVertexArray);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		}
@@ -522,17 +559,17 @@ namespace JSG {
 			m_QuadShader.SetMat4("u_View", m_Camera.GetViewMatrix());
 			m_QuadShader.SetMat4("u_Model", modelMatrix);
 			m_QuadShader.SetFloat3("u_LightPos", m_LightCubePosition);
-			m_QuadShader.SetFloat3("u_LigthDirection", m_LigthDirection);
-			m_QuadShader.SetFloat3("u_LightColor", m_LightColor);
+			m_QuadShader.SetFloat3("u_LigthDirection", m_LigthCubeDirection);
+			m_QuadShader.SetFloat3("u_LightColor", m_LightCubeColor);
 			m_QuadShader.SetFloat3("u_ObjectColor", m_EnemyColor);
-
+			m_QuadShader.SetFloat3("viewPos", m_Camera.GetPosition());
 			glBindVertexArray(m_QuadVertexArray);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		}
 
 		// Render Light Cube
 		{
-			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_LightCubePosition)
+			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), { m_LightCubePosition.x, m_LightCubePosition.y, 0.0 })
 										* glm::rotate(glm::mat4(1.0f), glm::radians(m_LightCubeAngle), glm::vec3(0, 0, 1))
 								    	* glm::scale(glm::mat4(1), glm::vec3(0.5f));
 
@@ -543,54 +580,6 @@ namespace JSG {
 			//m_LightCubeShader.SetFloat3("u_Color", m_Result);
 
 			glBindVertexArray(m_LightCubeVertexArray);
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-		}
-
-		// Render a triangle
-		{
-			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_TrianglePosition)
-										* glm::rotate(glm::mat4(1.0f), glm::radians(m_TriangleRotation), glm::vec3(0, 0, 1))
-			                            * glm::scale(glm::mat4(1), glm::vec3(m_TriangleSize));
-
-			m_TriangleShader.Bind();
-			m_TriangleShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
-			m_TriangleShader.SetMat4("u_View", m_Camera.GetViewMatrix());
-			m_TriangleShader.SetMat4("u_Model", modelMatrix);
-			m_TriangleShader.SetFloat3("u_Color", m_TriangleColor);
-
-			glBindVertexArray(m_TriangleVertexArray);
-			glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
-		}
-
-		// Render a quad.
-		{
-			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), m_QuadPosition)
-			    	                    * glm::rotate(glm::mat4(1.0f), glm::radians(m_QuadRotation), glm::vec3(0.0f, 0.0f, 1.0f))
-				                        * glm::scale(glm::mat4(1.0f), glm::vec3(m_QuadSize));
-
-			m_QuadShader.Bind();
-			m_QuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
-			m_QuadShader.SetMat4("u_View", m_Camera.GetViewMatrix());
-			m_QuadShader.SetMat4("u_Model", modelMatrix);
-			m_CircleShader.SetFloat3("u_Color", m_QuadColor);
-
-			glBindVertexArray(m_QuadVertexArray);
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-		}
-
-		// Render a circle.
-		{
-			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), m_CirclePosition)
-								        * glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
-							            * glm::scale(glm::mat4(1.0f), glm::vec3(m_CircleSize));
-
-			m_CircleShader.Bind();
-			m_CircleShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
-			m_CircleShader.SetMat4("u_View", m_Camera.GetViewMatrix());
-			m_CircleShader.SetMat4("u_Model", modelMatrix);
-			m_CircleShader.SetFloat3("u_Color", m_CircleColor);
-
-			glBindVertexArray(m_CircleVertexArray);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		}
 		
@@ -612,7 +601,7 @@ namespace JSG {
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		}
 
-
+		/*
 		// Render a quad made of circles
 		{
 			m_CircleShader.Bind();
@@ -634,7 +623,7 @@ namespace JSG {
 				}
 			}
 		}
-
+		*/
 		// Render a dot in origo
 		{
 			glm::mat4 projMatrix = glm::ortho(-m_AspectRatio, m_AspectRatio, -1.0f, 1.0f, -1.0f, 1.0f);
@@ -738,6 +727,13 @@ namespace JSG {
 		}
 		ImGui::Text("");
 
+
+		// Floor Settings 
+		
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Floor Settings");
+		ImGui::ColorEdit4("Floor Color", reinterpret_cast<float*>(&m_FloorColor));
+		ImGui::Text(" ");
+
 		// Player Settings
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Player Settings");
 		ImGui::ColorEdit4("Player Color", reinterpret_cast<float*>(&m_PlayerColor));
@@ -751,22 +747,7 @@ namespace JSG {
 		ImGui::ColorEdit4("Circle Color", reinterpret_cast<float*>(&m_CircleColor));
 		ImGui::Text(" ");
 
-		// Quad Settings
-		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Quad Settings");
-		ImGui::SliderFloat("Quad Size", &m_QuadSize, 1.0f, 100.0f);
-		ImGui::SliderFloat("Quad Rotation", &m_QuadRotation, 0.0f, 360.0f);
-		ImGui::SliderFloat("Quad X Position", &m_QuadPosition.x, -100.0f, 100.0f);
-		ImGui::SliderFloat("Quad Y Position", &m_QuadPosition.y, -100.0f, 100.0f);
-		ImGui::ColorEdit4("Quad Color", reinterpret_cast<float*>(&m_QuadColor));
 		ImGui::Text(" ");
-
-		// Triangle Settings
-		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Triangle Settings");
-		ImGui::SliderFloat("Triangle Size", &m_TriangleSize, 1.0f, 100.0f);
-		ImGui::SliderFloat("Triangle Rotation", &m_TriangleRotation, 0.0f, 360.0f);
-		ImGui::SliderFloat("Triangle X Position", &m_TrianglePosition.x, -100.0f, 100.0f);
-		ImGui::SliderFloat("Triangle Y Position", &m_TrianglePosition.y, -100.0f, 100.0f);
-		ImGui::ColorEdit4("Triangle Color", reinterpret_cast<float*>(&m_TriangleColor));
 
 		ImGui::End();
 
@@ -806,11 +787,11 @@ namespace JSG {
 	const glm::vec3 Sandbox2D::CalculateLighting(const glm::vec3& position, const glm::vec3& color)
 	{
 		float ambientStrength = 0.05f;
-		glm::vec3 ambient = ambientStrength * m_LightColor;
+		glm::vec3 ambient = ambientStrength * m_LightCubeColor;
 
 		glm::vec3 playerPosDir = glm::normalize(position - m_LightCubePosition);
-		float diff = glm::max(glm::dot(m_LigthDirection, playerPosDir), 0.0f);
-		glm::vec3 diffuse = diff * m_LightColor;
+		float diff = glm::max(glm::dot(m_LigthCubeDirection, playerPosDir), 0.0f);
+		glm::vec3 diffuse = diff * m_LightCubeColor;
 		
 		const glm::vec3 result = (diffuse + ambient) * color;
 		return result;
