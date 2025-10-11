@@ -356,15 +356,16 @@ namespace JSG {
 		//         Scalar Projection
 		//        |              | cos(180) = -2/2
 		// ||A|| * ||B|| * cos(0) = A.x * B.x + A.y * B.y = A . B <- Dot Product
-		const glm::vec3 DifferencePE = m_PlayerPosition - m_EnemyPosition;
-		const glm::vec3 NormalizedDifferencePE = glm::normalize(DifferencePE);
-		// Calculate the Dot Product of m_EnemyForwardDirection and NormalizedDifferencePE vectors.
-		const float dotProduct = glm::dot(m_EnemyForwardDirection, NormalizedDifferencePE);
-		// Calculate the angle between NormalizedDifferencePE and m_EnemyForwardDirection vectors.
-		m_Angle = glm::degrees(glm::acos(glm::clamp(dotProduct / (glm::length(NormalizedDifferencePE) * glm::length(m_EnemyForwardDirection)), -1.0f, 1.0f )));
+		// Calculate the Displacement vector of Player Position and Enemy Position.
+		const glm::vec3 DisplacementVector = m_PlayerPosition - m_EnemyPosition;
+		const glm::vec3 NormalizedDisplacementVector = glm::normalize(DisplacementVector);
+		// Calculate the Dot Product of m_EnemyForwardDirection and NormalizedDisplacementVector vectors.
+		const float DotProduct = glm::dot(m_EnemyForwardDirection, NormalizedDisplacementVector);
+		// Calculate the angle between NormalizedDisplacementVector and m_EnemyForwardDirection vectors.
+		const float Angle = glm::degrees(glm::acos(glm::clamp(DotProduct / (glm::length(NormalizedDisplacementVector) * glm::length(m_EnemyForwardDirection)), -1.0f, 1.0f )));
 		//std::cout << m_Angle << std::endl;
-		const float DifferencePELength = glm::length(DifferencePE);
-		if (m_Angle <= m_EnemyFOVAngle && DifferencePELength <= m_EnemyFOVRange)
+		const float DisplacementVectorLength = glm::length(DisplacementVector);
+		if (Angle <= m_EnemyFOVAngle && DisplacementVectorLength <= m_EnemyFOVRange)
 		{
 			m_PlayerColor = { 1.0f, 0.0f, 0.0f };
 			m_AttackState = true;
@@ -375,18 +376,14 @@ namespace JSG {
 			m_PlayerColor = { 0.0f, 1.0f, 0.0f };
 		}
 
-		if (m_AttackState && glm::length(DifferencePE) >= 1.2f)
+		if (m_AttackState && DisplacementVectorLength >= 1.2f)
 		{
-			m_NormalizedDifferencePEAngle = glm::degrees(glm::atan(NormalizedDifferencePE.y, NormalizedDifferencePE.x));
-			m_EnemyRotation = m_NormalizedDifferencePEAngle;
-			m_EnemyForwardDirection = NormalizedDifferencePE;
+			const float NormalizedDisplacementVectorAngle = glm::degrees(glm::atan(NormalizedDisplacementVector.y, NormalizedDisplacementVector.x));
+			m_EnemyRotation = NormalizedDisplacementVectorAngle;
+			m_EnemyForwardDirection = NormalizedDisplacementVector;
 
-			if (m_EnemyRotation <= 0.0f)
-			{
-				m_EnemyPosition.x += m_EnemyForwardDirection.x * m_EnemyVelocity * ts;
-				m_EnemyPosition.y += m_EnemyForwardDirection.y * m_EnemyVelocity * ts;
-			}
-
+			m_EnemyPosition.x += m_EnemyForwardDirection.x * m_EnemyVelocity * ts;
+			m_EnemyPosition.y += m_EnemyForwardDirection.y * m_EnemyVelocity * ts;
 		}
 
 		////////////////////////////////

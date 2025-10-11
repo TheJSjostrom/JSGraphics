@@ -103,8 +103,6 @@ namespace JSG {
 		float m_EnemySize = 1.0f;
 		glm::vec3 m_Result2 = { 0.0f, 0.0f, 0.0f };
 		bool m_AttackState = false;
-		float m_Angle2 = 0.0f;
-		float m_NormalizedDifferencePEAngle = 0.0f;
 
 		// Player
 		glm::vec3 m_PlayerPosition = { 1.0f, 2.0f, 0.0f };
