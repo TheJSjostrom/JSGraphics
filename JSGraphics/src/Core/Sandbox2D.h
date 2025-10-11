@@ -60,18 +60,12 @@ namespace JSG {
 		Shader m_CircleShader;
 
 		glm::vec3 m_BColor = { 0.009f, 0.018f, 0.039f };
-
+	
 		// Camera
-		glm::vec3 m_CameraUpDirection = { 0.0f, 1.0f, 0.0f };
-		glm::vec3 m_CameraPosition = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 m_CameraUpDirection = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 m_CameraPosition = { glm::cos(glm::radians(90.0f + -45.0f)) * 0.0f, glm::sin(glm::radians(90.0f + -45.0f)) * 0.0f, 0.0f};
 		float m_CameraRotation = 0.0f;
 		float m_CameraVelocity = 10.0f;
-
-		// Triangle
-		glm::vec3 m_TrianglePosition = { 1.5f, -5.0f, 0.0f };
-		float m_TriangleRotation = 0.0f;
-		float m_TriangleSize = 2.0f;
-		glm::vec3 m_TriangleColor = { 0.348f, 0.853f, 0.138f };
 
 		// Quad
 		glm::vec3 m_QuadPosition = { 10.0f, -5.0f, 0.0f };
@@ -99,24 +93,28 @@ namespace JSG {
 
 		// Enemy
 		glm::vec3 m_EnemyPosition = { 0.0f, 1.0f, 0.0f };
+		glm::vec3 m_EnemyForwardDirection = { 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_EnemyColor = { 1.0f, 0.0f, 0.0f };
-		glm::vec3 m_EnemyForwardDirection = { 0.0f, 0.0f, 0.0f };
-		float m_EnemyVelocity = 8.0f;
-		float m_EnemyFOVRange = 4.0f;
+
+		float m_EnemyVelocity = 4.0f;
+		float m_EnemyFOVRange = 5.0f;
 		float m_EnemyFOVAngle = 45.0f;
-		float m_EnemyRotation = 90.0f;
+		float m_EnemyRotation = 0.0f;
 		float m_EnemySize = 1.0f;
 		glm::vec3 m_Result2 = { 0.0f, 0.0f, 0.0f };
+		bool m_AttackState = false;
+		float m_Angle2 = 0.0f;
+		float m_NormalizedDifferencePEAngle = 0.0f;
 
 		// Player
-		glm::vec3 m_PlayerPosition = { 1.0f, -2.0f, 0.0f };
-		glm::vec3 m_PlayerColor = { 0.0f, 0.0f, 0.0f };
-		glm::vec3 m_PlayerForwardDirection = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 m_PlayerPosition = { 1.0f, 2.0f, 0.0f };
+		glm::vec3 m_PlayerColor = { 0.0f, 1.0f, 0.0f };
+		glm::vec3 m_PlayerForwardDirection = { 1.0f, 0.0f, 0.0f };
 		float m_PlayerRotationVelocity = 180.0f;
 		float m_PlayerVelocity = 8.0f;
 		float m_PlayerSizeVelocity = 1.0f;
 		float m_PlayerSize = 1.0f;
-		float m_PlayerRotation = 90.0f;
+		float m_PlayerRotation = 0.0f;
 		glm::vec3 m_Result = { 0.0f, 0.0f, 0.0f };
 		float m_QCColor = 0.5f;
 
