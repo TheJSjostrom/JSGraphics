@@ -356,27 +356,32 @@ namespace JSG {
 		//         Scalar Projection
 		//        |              | cos(180) = -2/2
 		// ||A|| * ||B|| * cos(0) = A.x * B.x + A.y * B.y = A . B <- Dot Product
+	
+
+
 		// Calculate the Displacement vector of Player Position and Enemy Position.
 		const glm::vec3 DisplacementVector = m_PlayerPosition - m_EnemyPosition;
+		// Normalize The Displacement vector.
 		const glm::vec3 NormalizedDisplacementVector = glm::normalize(DisplacementVector);
 		// Calculate the Dot Product of m_EnemyForwardDirection and NormalizedDisplacementVector vectors.
 		const float DotProduct = glm::dot(m_EnemyForwardDirection, NormalizedDisplacementVector);
 		// Calculate the angle between NormalizedDisplacementVector and m_EnemyForwardDirection vectors.
 		const float Angle = glm::degrees(glm::acos(glm::clamp(DotProduct / (glm::length(NormalizedDisplacementVector) * glm::length(m_EnemyForwardDirection)), -1.0f, 1.0f )));
-		//std::cout << m_Angle << std::endl;
+		// Calculate the length of the DisplacementVectorLength vector.
 		const float DisplacementVectorLength = glm::length(DisplacementVector);
+
 		if (Angle <= m_EnemyFOVAngle && DisplacementVectorLength <= m_EnemyFOVRange)
 		{
 			m_PlayerColor = { 1.0f, 0.0f, 0.0f };
-			m_AttackState = true;
+			m_EnemyAttackState = true;
 		}
 		else 
 		{
-			m_AttackState = false;
+			m_EnemyAttackState = false;
 			m_PlayerColor = { 0.0f, 1.0f, 0.0f };
 		}
 
-		if (m_AttackState && DisplacementVectorLength >= 1.2f)
+		if (m_EnemyAttackState && DisplacementVectorLength >= m_PlayerHitBox)
 		{
 			const float NormalizedDisplacementVectorAngle = glm::degrees(glm::atan(NormalizedDisplacementVector.y, NormalizedDisplacementVector.x));
 			m_EnemyRotation = NormalizedDisplacementVectorAngle;
@@ -453,7 +458,7 @@ namespace JSG {
 		
 	}
 
-	void Sandbox2D::OnRender()
+	void Sandbox2D::OnRender() 
 	{
 		// Clear the the whole scene.
 		glClearColor(m_BColor.x, m_BColor.y, m_BColor.z, 1.0f);
@@ -474,14 +479,14 @@ namespace JSG {
 		//			v
 		// Render Quad Floor.
 		{
-			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_FloorPosition)
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1), m_FloorPosition)
 										* glm::rotate(glm::mat4(1.0f), glm::radians(m_FloorRotation), glm::vec3(0, 0, 1))
 										* glm::scale(glm::mat4(1), glm::vec3(m_FloorSize));
 
 			m_QuadShader.Bind();
 			m_QuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
 			m_QuadShader.SetMat4("u_View", m_Camera.GetViewMatrix());
-			m_QuadShader.SetMat4("u_Model", modelMatrix);
+			m_QuadShader.SetMat4("u_Model", ModelMatrix);
 			m_QuadShader.SetFloat3("u_LightPos", m_LightCubePosition);
 			m_QuadShader.SetFloat3("u_LigthDirection", m_LigthCubeDirection);
 			m_QuadShader.SetFloat3("u_LightColor", m_LightCubeColor);
@@ -494,14 +499,19 @@ namespace JSG {
 
 		// Render quad player
 		{
-			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_PlayerPosition)
-										* glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0, 0, 1))
-										* glm::scale(glm::mat4(1), glm::vec3(m_PlayerSize));
+			glm::mat4 ModelMatrix = glm::translate(glm::mat4(1), m_PlayerPosition)
+								  * glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0, 0, 1))
+								  * glm::scale(glm::mat4(1), glm::vec3(m_PlayerSize));
+
+			if (Input::IsKeyPressed(GLFW_KEY_M))
+			{
+				ModelMatrix *= glm::inverse(ModelMatrix);
+			}
 
 			m_QuadShader.Bind();
 			m_QuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
 			m_QuadShader.SetMat4("u_View", m_Camera.GetViewMatrix());
-			m_QuadShader.SetMat4("u_Model", modelMatrix);
+			m_QuadShader.SetMat4("u_Model", ModelMatrix);
 			m_QuadShader.SetFloat3("u_LightPos", m_LightCubePosition);
 			m_QuadShader.SetFloat3("u_LigthDirection", m_LigthCubeDirection);
 			m_QuadShader.SetFloat3("u_LightColor", m_LightCubeColor);
@@ -511,17 +521,17 @@ namespace JSG {
 			glBindVertexArray(m_QuadVertexArray);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		}
-		
+
 		// Render quad Enemy
 		{
-			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_EnemyPosition)
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1), m_EnemyPosition)
 										* glm::rotate(glm::mat4(1.0f), glm::radians(m_EnemyRotation), glm::vec3(0, 0, 1))
 										* glm::scale(glm::mat4(1), glm::vec3(m_EnemySize));
 
 			m_QuadShader.Bind();
 			m_QuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
 			m_QuadShader.SetMat4("u_View", m_Camera.GetViewMatrix());
-			m_QuadShader.SetMat4("u_Model", modelMatrix);
+			m_QuadShader.SetMat4("u_Model", ModelMatrix);
 			m_QuadShader.SetFloat3("u_LightPos", m_LightCubePosition);
 			m_QuadShader.SetFloat3("u_LigthDirection", m_LigthCubeDirection);
 			m_QuadShader.SetFloat3("u_LightColor", m_LightCubeColor);
@@ -534,14 +544,14 @@ namespace JSG {
 
 		// Render Light Cube
 		{
-			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), { m_LightCubePosition.x, m_LightCubePosition.y, 0.0 })
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1), { m_LightCubePosition.x, m_LightCubePosition.y, 0.0 })
 										* glm::rotate(glm::mat4(1.0f), glm::radians(m_LightCubeAngle), glm::vec3(0, 0, 1))
 								    	* glm::scale(glm::mat4(1), glm::vec3(0.5f));
 
 			m_CircleShader.Bind();
 			m_CircleShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
 			m_CircleShader.SetMat4("u_View", m_Camera.GetViewMatrix());
-			m_CircleShader.SetMat4("u_Model", modelMatrix);
+			m_CircleShader.SetMat4("u_Model", ModelMatrix);
 			m_CircleShader.SetFloat3("u_Color", glm::vec3(1.0f, 1.0f, 1.0f));
 
 			glBindVertexArray(m_CircleVertexArray);
@@ -555,11 +565,11 @@ namespace JSG {
 
 		for (size_t i = 0; i < m_Circles.size(); i++)
 		{
-			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), m_Circles[i].GetPosition())
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1), m_Circles[i].GetPosition())
 										* glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
 										* glm::scale(glm::mat4(1), glm::vec3(m_Circles[i].GetSize()));
 
-			m_CircleShader.SetMat4("u_Model", modelMatrix);
+			m_CircleShader.SetMat4("u_Model", ModelMatrix);
 			m_CircleShader.SetFloat3("u_Color", m_Circles[i].GetColor());
 
 			glBindVertexArray(m_CircleVertexArray);

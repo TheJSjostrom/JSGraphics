@@ -50,7 +50,7 @@ namespace JSG {
 		// Set GLFW Callbacks
 		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
 		{
-			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			WindowData& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 			data.Width = width;
 			data.Height = height;
 
@@ -60,7 +60,7 @@ namespace JSG {
 
 		glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window)
 		{
-			const WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			const WindowData& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 
 			WindowCloseEvent event;
 			data.EventCallback(event);
@@ -68,7 +68,7 @@ namespace JSG {
 
 		glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 		{
-			const WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			const WindowData& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 
 			switch (action)
 			{
@@ -95,7 +95,7 @@ namespace JSG {
 
 		glfwSetCharCallback(m_Window, [](GLFWwindow* window, unsigned int keycode)
 		{
-				const WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+				const WindowData& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 
 				KeyTypedEvent event(keycode);
 				data.EventCallback(event);
@@ -103,7 +103,7 @@ namespace JSG {
 
 		glfwSetMouseButtonCallback(m_Window, [](GLFWwindow* window, int button, int action, int mods)
 		{
-			const WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			const WindowData& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 
 			switch (action)
 			{
@@ -124,7 +124,7 @@ namespace JSG {
 
 		glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xOffset, double yOffset)
 		{
-			const WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			const WindowData& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 
 			MouseScrolledEvent event((float)xOffset, (float)yOffset);
 			data.EventCallback(event);
@@ -132,7 +132,7 @@ namespace JSG {
 
 		glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double xPos, double yPos)
 		{
-			const WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			const WindowData& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 
 			MouseMovedEvent event((float)xPos, (float)yPos);
 			data.EventCallback(event);

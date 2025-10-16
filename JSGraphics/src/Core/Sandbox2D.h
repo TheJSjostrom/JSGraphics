@@ -33,11 +33,6 @@ namespace JSG {
 		float m_VectorRotation = 45.0f;
 		glm::vec3 m_Vector = { 0.0f, 0.0f, 0.0f };
 
-		// Camera
-		float m_ZoomLevel = 10.0f;
-		float m_AspectRatio = 0.0f;
-		Camera m_Camera;
-
 		// Shader Data
 		uint32_t m_LightCubeVertexArray;
 		VertexBuffer m_LightCubeVertexBuffer;
@@ -62,8 +57,12 @@ namespace JSG {
 		glm::vec3 m_BColor = { 0.009f, 0.018f, 0.039f };
 	
 		// Camera
+		Camera m_Camera;
+		float m_ZoomLevel = 10.0f;
+		float m_AspectRatio = 0.0f;
+
 		glm::vec3 m_CameraUpDirection = { 0.0f, 0.0f, 0.0f };
-		glm::vec3 m_CameraPosition = { glm::cos(glm::radians(90.0f + -45.0f)) * 0.0f, glm::sin(glm::radians(90.0f + -45.0f)) * 0.0f, 0.0f};
+		glm::vec3 m_CameraPosition = { 0.0f, 1.0f, 0.0f };
 		float m_CameraRotation = 0.0f;
 		float m_CameraVelocity = 10.0f;
 
@@ -92,20 +91,21 @@ namespace JSG {
 		float m_FloorRotation = 0.0f;
 
 		// Enemy
-		glm::vec3 m_EnemyPosition = { 0.0f, 1.0f, 0.0f };
+		glm::vec3 m_EnemyPosition = { -5.0f, 0.0f, 0.0f };
 		glm::vec3 m_EnemyForwardDirection = { 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_EnemyColor = { 1.0f, 0.0f, 0.0f };
 
 		float m_EnemyVelocity = 4.0f;
 		float m_EnemyFOVRange = 5.0f;
 		float m_EnemyFOVAngle = 45.0f;
-		float m_EnemyRotation = 0.0f;
+		float m_EnemyRotation = -90.0f;
 		float m_EnemySize = 1.0f;
 		glm::vec3 m_Result2 = { 0.0f, 0.0f, 0.0f };
-		bool m_AttackState = false;
+		bool m_EnemyAttackState = false;
+		bool f = false;
 
 		// Player
-		glm::vec3 m_PlayerPosition = { 1.0f, 2.0f, 0.0f };
+		glm::vec3 m_PlayerPosition = { 5.0f, 0.0f, 0.0f };
 		glm::vec3 m_PlayerColor = { 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_PlayerForwardDirection = { 1.0f, 0.0f, 0.0f };
 		float m_PlayerRotationVelocity = 180.0f;
@@ -115,6 +115,7 @@ namespace JSG {
 		float m_PlayerRotation = 0.0f;
 		glm::vec3 m_Result = { 0.0f, 0.0f, 0.0f };
 		float m_QCColor = 0.5f;
+		float m_PlayerHitBox = 1.25f;
 
 		// Light Cube
 		glm::vec3 m_LightCubeColor = { 1.0f, 1.0f, 1.0f };
