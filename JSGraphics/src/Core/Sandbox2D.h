@@ -117,6 +117,7 @@ namespace JSG {
 		float m_QCColor = 0.5f;
 		float m_PlayerHitBox = 1.25f;
 
+		float m_Color2 = 0.0f;
 		// Light Cube
 		glm::vec3 m_LightCubeColor = { 1.0f, 1.0f, 1.0f };
 		glm::vec3 m_LigthCubeDirection = { 0.0f, 0.0f, 0.0f };

@@ -370,15 +370,19 @@ namespace JSG {
 		// Calculate the length of the DisplacementVectorLength vector.
 		const float DisplacementVectorLength = glm::length(DisplacementVector);
 
+		float Value = 11.0f;
+		float MyValue = glm::clamp(Value, 1.0f, 10.0f);
+
 		if (Angle <= m_EnemyFOVAngle && DisplacementVectorLength <= m_EnemyFOVRange)
 		{
-			m_PlayerColor = { 1.0f, 0.0f, 0.0f };
+			m_Color2 += 4.0f * ts;
+			m_EnemyColor = { glm::max(glm::cos(m_Color2), 0.1f), 0.0f, 0.0f};
 			m_EnemyAttackState = true;
 		}
 		else 
 		{
 			m_EnemyAttackState = false;
-			m_PlayerColor = { 0.0f, 1.0f, 0.0f };
+			m_EnemyColor = { 0.0f, 1.0f, 0.0f };
 		}
 
 		if (m_EnemyAttackState && DisplacementVectorLength >= m_PlayerHitBox)
