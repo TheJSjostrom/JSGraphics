@@ -321,7 +321,7 @@ namespace JSG {
 			m_PlayerSize -= m_PlayerSizeVelocity * ts;
 		}
 
-		m_PlayerSize = std::max(m_PlayerSize, 1.0f);
+		m_PlayerSize = std::max(m_PlayerSize, 0.5f);
 	
 		////////////////////////////////
 		/////////// ENEMY /////////////
@@ -357,8 +357,6 @@ namespace JSG {
 		//        |              | cos(180) = -2/2
 		// ||A|| * ||B|| * cos(0) = A.x * B.x + A.y * B.y = A . B <- Dot Product
 	
-
-
 		// Calculate the Displacement vector of Player Position and Enemy Position.
 		const glm::vec3 DisplacementVector = m_PlayerPosition - m_EnemyPosition;
 		// Normalize The Displacement vector.
@@ -370,13 +368,15 @@ namespace JSG {
 		// Calculate the length of the DisplacementVectorLength vector.
 		const float DisplacementVectorLength = glm::length(DisplacementVector);
 
-		float Value = 11.0f;
-		float MyValue = glm::clamp(Value, 1.0f, 10.0f);
-
 		if (Angle <= m_EnemyFOVAngle && DisplacementVectorLength <= m_EnemyFOVRange)
 		{
-			m_Color2 += 4.0f * ts;
-			m_EnemyColor = { glm::max(glm::cos(m_Color2), 0.1f), 0.0f, 0.0f};
+			m_RotationValue += 4.0f * ts;
+			float CosValue = glm::cos(m_RotationValue);
+
+			if (CosValue <= 0.0f)
+				CosValue *= -1.0f;
+
+			m_EnemyColor = { CosValue, 0.0f, 0.0f };
 			m_EnemyAttackState = true;
 		}
 		else 
@@ -440,9 +440,6 @@ namespace JSG {
 		////////////// DOT PRODUCT ////////////
 		///////////////////////////////////////
 
-	//	m_Result = CalculateLighting(m_PlayerPosition, m_PlayerColor);
-	//	m_Result2 = CalculateLighting(m_EnemyPosition, m_EnemyColor);
-
 		// Scaling Matrix
 
 		// Rotation Matrix
@@ -465,7 +462,7 @@ namespace JSG {
 	void Sandbox2D::OnRender() 
 	{
 		// Clear the the whole scene.
-		glClearColor(m_BColor.x, m_BColor.y, m_BColor.z, 1.0f);
+		glClearColor(m_BackgroundColor.x, m_BackgroundColor.y, m_BackgroundColor.z, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		m_Camera.SetProjectionMatrix(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
@@ -550,7 +547,7 @@ namespace JSG {
 		{
 			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1), { m_LightCubePosition.x, m_LightCubePosition.y, 0.0 })
 										* glm::rotate(glm::mat4(1.0f), glm::radians(m_LightCubeAngle), glm::vec3(0, 0, 1))
-								    	* glm::scale(glm::mat4(1), glm::vec3(0.5f));
+								    	* glm::scale(glm::mat4(1), glm::vec3(0.25f));
 
 			m_CircleShader.Bind();
 			m_CircleShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
@@ -580,29 +577,6 @@ namespace JSG {
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		}
 
-		/*
-		// Render a quad made of circles
-		{
-			m_CircleShader.Bind();
-			m_CircleShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
-			m_CircleShader.SetMat4("u_View", m_Camera.GetViewMatrix());
-
-			for (uint32_t i = 0; i < 20; i++)
-			{
-				for (uint32_t y = 0; y < 20; y++)
-				{
-					const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), {i, y, 0.0f}) 
-										        * glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)) 
-										        * glm::scale(glm::mat4(1), glm::vec3(0.5f, 0.5f, 0.5f));
-					m_CircleShader.SetMat4("u_Model", modelMatrix);
-					m_CircleShader.SetFloat3("u_Color", { m_QCColor, 0.0f, 0.1f * i});
-
-					glBindVertexArray(m_CircleVertexArray);
-					glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-				}
-			}
-		}
-		*/
 		// Render a dot in origo
 		{
 			glm::mat4 projMatrix = glm::ortho(-m_AspectRatio, m_AspectRatio, -1.0f, 1.0f, -1.0f, 1.0f);
@@ -631,7 +605,7 @@ namespace JSG {
 		// TODO: UPPDATERA EDIT TOOL!
 
 		//V1 info
-		ImGui::Begin("V1");
+		ImGui::Begin("Vector");
 		ImGui::SliderFloat("Rotation slider", &m_VectorRotation, 0.0f, 360.0f);
 		ImGui::Text("X-coord: cos(%f) = %f", m_VectorRotation, m_Vector.x);
 		ImGui::Text("Y-coord: sin(%f) = %f", m_VectorRotation, m_Vector.y);
@@ -688,8 +662,8 @@ namespace JSG {
 		//////////////////////////////////
 		ImGui::Begin("Edit Tool");
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "COLOR");
-		ImGui::ColorEdit4("Background Color", reinterpret_cast<float*>(&m_BColor));
-		ImGui::SliderFloat("Circles Color", &m_QCColor, 0.0f, 1.0f);
+		ImGui::ColorEdit4("Background Color", reinterpret_cast<float*>(&m_BackgroundColor));
+
 		ImGui::Text("");
 
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Camera Settings");
@@ -699,7 +673,7 @@ namespace JSG {
 		if (ImGui::Button("Set camera position to { 0.0, 0.0, 0.0 }"))
 			m_CameraPosition = { 0.0f, 0.0f, 0.0f };
 
-		ImGui::SliderFloat("Size", &m_VCircleSize, 0.5f, 10.0f);
+		ImGui::SliderFloat("Size", &m_VCircleSize, 0.1f, 10.0f);
 		ImGui::ColorEdit4("VCircle Color", reinterpret_cast<float*>(&m_VColor));
 	    ImGui::Text("Number of circles: %d", static_cast<int>(m_Circles.size()));
 		if (ImGui::Button("Clear Circles."))
@@ -718,40 +692,7 @@ namespace JSG {
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Player Settings");
 		ImGui::ColorEdit4("Player Color", reinterpret_cast<float*>(&m_PlayerColor));
 		ImGui::Text(" ");
-
-		// Circle Settings
-		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Circle Settings");
-		ImGui::SliderFloat("Circle Size", &m_CircleSize, 1.0f, 100.0f);
-		ImGui::SliderFloat("Circle X Position", &m_CirclePosition.x, -100.0f, 100.0f);
-		ImGui::SliderFloat("Circle Y Position", &m_CirclePosition.y, -100.0f, 100.0f);
-		ImGui::ColorEdit4("Circle Color", reinterpret_cast<float*>(&m_CircleColor));
-		ImGui::Text(" ");
 		ImGui::End();
-
-		/*
-		ImGui::Begin("Math");
-		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "ROTATION");
-		ImGui::SliderFloat("Change Angle", &m_Angle, 0.0f, 360.0f);
-		ImGui::TextColored(ImVec4(1, 1, 0, 1), "IVector");
-		ImGui::Text("IVector X: %f", m_IVector.x);
-		ImGui::Text("IVector Y: %f", m_IVector.y);
-		ImGui::Text("IVector Angle: %f", m_Angle);
-
-		ImGui::TextColored(ImVec4(1, 0, 0, 1), "transformedPos");
-		ImGui::Text("TransformedPos VectorX: %f", m_PosUV.x);
-		ImGui::Text("TransformedPos VectorY: %f", m_PosUV.y);
-		ImGui::Text("IVector Angle: %f", m_Angle);
-
-		ImGui::Text(" ");
-		ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "DOT PRODUCT");
-		ImGui::SliderFloat("Change VAngle", &m_VAngle, 0.0f, 360.0f);
-		ImGui::SliderFloat("Change V2Angle", &m_V2Angle, 0.0f, 360.0f);
-		ImGui::Text("Dot Product: %f", m_DotProduct);
-		ImGui::Text("Dot Product2: %f", m_DotProduct2);
-		ImGui::Text("Vector: %f, %f", m_V.x, m_V.y);
-		ImGui::Text("Vector2: %f, %f", m_V2.x, m_V2.y);
-		ImGui::End();
-		*/
 	}
 
 	void Sandbox2D::OnEvent(Event& e)
@@ -759,19 +700,6 @@ namespace JSG {
 		EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<MouseScrolledEvent>(HZ_BIND_EVENT_FN(Sandbox2D::OnMouseScrolled));
 		dispatcher.Dispatch<MouseButtonPressedEvent>(HZ_BIND_EVENT_FN(Sandbox2D::OnMouseButtonPressed));
-	}
-
-	const glm::vec3 Sandbox2D::CalculateLighting(const glm::vec3& position, const glm::vec3& color)
-	{
-		float ambientStrength = 0.05f;
-		glm::vec3 ambient = ambientStrength * m_LightCubeColor;
-
-		glm::vec3 playerPosDir = glm::normalize(position - m_LightCubePosition);
-		float diff = glm::max(glm::dot(m_LigthCubeDirection, playerPosDir), 0.0f);
-		glm::vec3 diffuse = diff * m_LightCubeColor;
-		
-		const glm::vec3 result = (diffuse + ambient) * color;
-		return result;
 	}
 
 	bool Sandbox2D::OnMouseScrolled(const MouseScrolledEvent& e)

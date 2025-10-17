@@ -15,7 +15,7 @@ namespace JSG {
 	private:
 		void Shutdown();
 	private:
-		uint32_t m_VertexBufferID;
+		uint32_t m_VertexBufferID = 0;
 	};
 
 	class IndexBuffer
@@ -30,7 +30,7 @@ namespace JSG {
 	private:
 		void Shutdown();
 	private:
-		uint32_t m_IndexBufferID;
+		uint32_t m_IndexBufferID = 0;
 	};
 
 }

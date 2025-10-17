@@ -24,7 +24,7 @@ namespace JSG {
 		void UploadUniformFloat3(const std::string& name, const glm::vec3& value);
 		void UploadUniformMat4(const std::string& name, const glm::mat4& matrix);
 	private:
-		uint32_t m_ShaderID;
+		uint32_t m_ShaderID = 0;
 	};
 
 }

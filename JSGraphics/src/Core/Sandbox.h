@@ -6,10 +6,6 @@ namespace JSG {
 	class Sandbox
 	{
 	public:
-		Sandbox() 
-		{
-		}
-
 		virtual ~Sandbox() 
 		{
 		}
