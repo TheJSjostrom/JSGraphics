@@ -20,8 +20,76 @@ namespace JSG {
 	Sandbox2D::Sandbox2D() : 
 		m_Camera(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel)
 	{
+		m_Balls.reserve(20);
+
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		/////////////////////////////////
+		//////////// Ball ///////////////
+		/////////////////////////////////
+
+		glCreateVertexArrays(1, &m_BallVertexArray);
+		glBindVertexArray(m_BallVertexArray);
+
+		float BallVertices[4 * 6] = {
+			//  Position         Local Position
+			-0.5f, -0.5f, 0.0f, -1.0f, -1.0f, 0.0f, // Vertex Index 0
+			 0.5f, -0.5f, 0.0f,  1.0f, -1.0f, 0.0f, // Vertex Index 1
+			 0.5f,  0.5f, 0.0f,  1.0f,  1.0f, 0.0f, // Vertex Index 2
+			-0.5f,  0.5f, 0.0f, -1.0f,  1.0f, 0.0f  // Vertex Index 3
+		};
+
+		m_BallVertexBuffer.Init(sizeof(BallVertices), BallVertices);
+		m_BallVertexBuffer.Bind();
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(0 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+
+		uint32_t BallIndices[6] = { 0, 1, 2, 2, 3, 0 };
+		m_BallIndexBuffer.Init(sizeof(BallIndices), BallIndices);
+		m_BallIndexBuffer.Bind();
+
+		const std::string BallVertexSrc = R"(
+			#version 330 core
+			
+			layout(location = 0) in vec3 a_Position;
+			layout(location = 1) in vec3 a_LocalPosition;
+			
+			uniform mat4 u_Proj;
+			uniform mat4 u_View;
+			uniform mat4 u_Model;
+			
+			out vec3 FragPos;
+
+			void main()
+			{
+				FragPos = a_LocalPosition;
+				gl_Position = u_Proj * u_View * u_Model * vec4(a_Position, 1.0);
+			}
+		)";
+
+		const std::string BallFragSrc = R"(
+			#version 330 core
+			
+			layout(location = 0) out vec4 color;
+			
+			in vec3 FragPos;
+
+			void main()
+			{ 
+				float FragPosLength = sqrt(FragPos.x * FragPos.x + FragPos.y * FragPos.y);
+				color = vec4(0.0, 0.0, 0.0, 0.0);
+
+				if (FragPosLength < 1.0)
+					color = vec4(1.0, 0.0, 0.0, 1.0f);
+			}
+		)";
+
+		m_BallShader.Init(BallVertexSrc, BallFragSrc);
+		m_BallShader.Bind();
 
 		/////////////////////////////////
 		///////// Light Cube ////////////
@@ -30,19 +98,19 @@ namespace JSG {
 		glCreateVertexArrays(1, &m_LightCubeVertexArray);
 		glBindVertexArray(m_LightCubeVertexArray);
 
-		float LightCubeVertices[4 * 3] = {
-			// Vertex Position
-			   -0.5f, -0.5f, 0.0f,
-				0.5f, -0.5f, 0.0f,
-				0.5f,  0.5f, 0.0f,
-			   -0.5f,  0.5f, 0.0f
+		float LightCubeVertices[4 * 6] = {
+			//   Position          Normal
+				-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 0
+				 0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 1
+				 0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 2
+				-0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f  // Vertex Index 3
 		};
 
 		m_LightCubeVertexBuffer.Init(sizeof(LightCubeVertices), LightCubeVertices);
 		m_LightCubeVertexBuffer.Bind();
 
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), reinterpret_cast<void*>(0 * sizeof(float)));
 
 		uint32_t LightCubeIndices[6] = { 0, 1, 2, 2, 3, 0 };
 		m_LightCubeIndexBuffer.Init(sizeof(LightCubeIndices), LightCubeIndices);
@@ -82,18 +150,18 @@ namespace JSG {
 		glBindVertexArray(m_QuadVertexArray);
 
 		float QuadVertices[4 * 6] = {
-     	// Vertex Position
-		   -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
-			0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
-			0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
-		   -0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f
+     	//   Position          Normal
+			-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 0
+			 0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 1
+			 0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 2
+			-0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f  // Vertex Index 3
 		};
 
 		m_QuadVertexBuffer.Init(sizeof(QuadVertices), QuadVertices);
 		m_QuadVertexBuffer.Bind();
 
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(0 * sizeof(float)));
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
 
@@ -130,9 +198,9 @@ namespace JSG {
 
 			uniform vec3 u_Color;
 			uniform vec3 u_LightPos;
-			uniform vec3 u_LigthDirection;			
+			uniform vec3 u_LigthDirection;
 			uniform vec3 u_LightColor;
-			uniform vec3 u_ObjectColor;			
+			uniform vec3 u_ObjectColor;
 			uniform vec3 u_viewPos;
 
 			in vec3 FragPos;
@@ -170,20 +238,24 @@ namespace JSG {
 		glBindVertexArray(m_CircleVertexArray);
 
 		float CircleVertices[4 * 6] = {
-			// Vertex Position     Local Position
-			-0.5f, -0.5f, 0.0f, -1.0f, -1.0f, 0.0f,
-			 0.5f, -0.5f, 0.0f,  1.0f, -1.0f, 0.0f,
-			 0.5f,  0.5f, 0.0f,  1.0f,  1.0f, 0.0f,
-			-0.5f,  0.5f, 0.0f, -1.0f,  1.0f, 0.0f
+			//  Position         Local Position
+			-0.5f, -0.5f, 0.0f, -1.0f, -1.0f, 0.0f, // Vertex Index 0
+			 0.5f, -0.5f, 0.0f,  1.0f, -1.0f, 0.0f, // Vertex Index 1
+			 0.5f,  0.5f, 0.0f,  1.0f,  1.0f, 0.0f, // Vertex Index 2
+			-0.5f,  0.5f, 0.0f, -1.0f,  1.0f, 0.0f  // Vertex Index 3
 		};
-	
+
 		m_CircleVertexBuffer.Init(sizeof(CircleVertices), CircleVertices);
 		m_CircleVertexBuffer.Bind();
 
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(0 * sizeof(float)));
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+
+		// Byte Arithmetic
+		// Attribute Memory Address = Base Memory Address + offset + (Vertex Index * Stride)
+		// Attribute Components Memory Address = Attribute Memory Address + sizeof(type)
 
 		uint32_t CircleIndices[6] = { 0, 1, 2, 2, 3, 0 };
 		m_CircleIndexBuffer.Init(sizeof(CircleIndices), CircleIndices);
@@ -239,19 +311,15 @@ namespace JSG {
 	{
 		Application& app = *Application::Get();
 		m_AspectRatio = app.GetWindow().GetWidth() / static_cast<float>(app.GetWindow().GetHeight());
-	
+
 		// Player
 		//glm::vec3 PlayerUpDirection = { 0.0f, 0.0f, 1.0f };
 		//glm::vec3 PlayerLeftDirection = glm::normalize(glm::cross(PlayerUpDirection, m_PlayerForwardDirection));
+		// copy elision
 		
-		// cos(v) = X koordinat
-		// sin(v) = Y koordinat
-		m_Vector = { glm::cos(glm::radians(m_VectorRotation)), glm::sin(glm::radians(m_VectorRotation)), 0.0f };
-
 		///////////////////////////////////
 		///////// LIGHT CUBE //////////////
 		///////////////////////////////////
-		
 		m_LigthCubeDirection = { glm::cos(glm::radians(m_LightCubeAngle)), glm::sin(glm::radians(m_LightCubeAngle)), 0.0f };
 		m_LigthCubeDirection = glm::normalize(m_LigthCubeDirection);
 
@@ -287,113 +355,27 @@ namespace JSG {
 		///////// PLAYER //////////////
 		///////////////////////////////
 
-		m_PlayerForwardDirection = { glm::cos(glm::radians(m_PlayerRotation)), glm::sin(glm::radians(m_PlayerRotation)), 0.0f };
-		m_PlayerForwardDirection = glm::normalize(m_PlayerForwardDirection);
-		
-		if (Input::IsKeyPressed(GLFW_KEY_UP))
+		m_Player.OnUpdate(ts);
+
+		////////////////////////////////
+		///////////  BALL  ////////////
+		///////////////////////////////
+
+		for (size_t i = 0; i < m_Balls.size(); i++)
 		{
-			m_PlayerPosition.x += m_PlayerForwardDirection.x * m_PlayerVelocity * ts;
-			m_PlayerPosition.y += m_PlayerForwardDirection.y * m_PlayerVelocity * ts;
-		}
-		else if (Input::IsKeyPressed(GLFW_KEY_DOWN))
-		{
-			m_PlayerPosition.x -= m_PlayerForwardDirection.x * m_PlayerVelocity * ts;
-			m_PlayerPosition.y -= m_PlayerForwardDirection.y * m_PlayerVelocity * ts;
+			m_Balls[i].OnUpdate(ts);
 		}
 
-		// PLAYER ROTATION
-		if (Input::IsKeyPressed(GLFW_KEY_LEFT))
-		{
-			m_PlayerRotation += m_PlayerRotationVelocity * ts;
-		}
-		else if (Input::IsKeyPressed(GLFW_KEY_RIGHT))
-		{
-			m_PlayerRotation -= m_PlayerRotationVelocity * ts;
-		}
-
-		// PLAYER SIZE
-		if (Input::IsKeyPressed(GLFW_KEY_LEFT_SHIFT))
-		{
-			m_PlayerSize += m_PlayerSizeVelocity * ts;
-		}
-		else if (Input::IsKeyPressed(GLFW_KEY_X))
-		{
-			m_PlayerSize -= m_PlayerSizeVelocity * ts;
-		}
-
-		m_PlayerSize = std::max(m_PlayerSize, 0.5f);
-	
 		////////////////////////////////
 		/////////// ENEMY /////////////
 		///////////////////////////////
-
-		m_EnemyForwardDirection = { glm::cos(glm::radians(m_EnemyRotation)), glm::sin(glm::radians(m_EnemyRotation)), 0.0f };
-		m_EnemyForwardDirection = glm::normalize(m_EnemyForwardDirection);
-
-		/*
-		if (Input::IsKeyPressed(GLFW_KEY_I))
-		{
-			m_EnemyPosition.x += m_EnemyForwardDirection.x * m_EnemyVelocity * ts;
-			m_EnemyPosition.y += m_EnemyForwardDirection.y * m_EnemyVelocity * ts;
-		}
-		else if (Input::IsKeyPressed(GLFW_KEY_K))
-		{
-			m_EnemyPosition.x -= m_EnemyForwardDirection.x * m_EnemyVelocity * ts;
-			m_EnemyPosition.y -= m_EnemyForwardDirection.y * m_EnemyVelocity * ts;
-		}
-
-		if (Input::IsKeyPressed(GLFW_KEY_J))
-		{
-			m_EnemyRotation += 180.0f * ts;
-		}
-		else if (Input::IsKeyPressed(GLFW_KEY_L))
-		{
-			m_EnemyRotation -= 180.0f * ts;
-		}
-		*/
 
 		// Geometric interpretation - Algebraic interpretation
 		//         Scalar Projection
 		//        |              | cos(180) = -2/2
 		// ||A|| * ||B|| * cos(0) = A.x * B.x + A.y * B.y = A . B <- Dot Product
-	
-		// Calculate the Displacement vector of Player Position and Enemy Position.
-		const glm::vec3 DisplacementVector = m_PlayerPosition - m_EnemyPosition;
-		// Normalize The Displacement vector.
-		const glm::vec3 NormalizedDisplacementVector = glm::normalize(DisplacementVector);
-		// Calculate the Dot Product of m_EnemyForwardDirection and NormalizedDisplacementVector vectors.
-		const float DotProduct = glm::dot(m_EnemyForwardDirection, NormalizedDisplacementVector);
-		// Calculate the angle between NormalizedDisplacementVector and m_EnemyForwardDirection vectors.
-		const float Angle = glm::degrees(glm::acos(glm::clamp(DotProduct / (glm::length(NormalizedDisplacementVector) * glm::length(m_EnemyForwardDirection)), -1.0f, 1.0f )));
-		// Calculate the length of the DisplacementVectorLength vector.
-		const float DisplacementVectorLength = glm::length(DisplacementVector);
-
-		if (Angle <= m_EnemyFOVAngle && DisplacementVectorLength <= m_EnemyFOVRange)
-		{
-			m_RotationValue += 4.0f * ts;
-			float CosValue = glm::cos(m_RotationValue);
-
-			if (CosValue <= 0.0f)
-				CosValue *= -1.0f;
-
-			m_EnemyColor = { CosValue, 0.0f, 0.0f };
-			m_EnemyAttackState = true;
-		}
-		else 
-		{
-			m_EnemyAttackState = false;
-			m_EnemyColor = { 0.0f, 1.0f, 0.0f };
-		}
-
-		if (m_EnemyAttackState && DisplacementVectorLength >= m_PlayerHitBox)
-		{
-			const float NormalizedDisplacementVectorAngle = glm::degrees(glm::atan(NormalizedDisplacementVector.y, NormalizedDisplacementVector.x));
-			m_EnemyRotation = NormalizedDisplacementVectorAngle;
-			m_EnemyForwardDirection = NormalizedDisplacementVector;
-
-			m_EnemyPosition.x += m_EnemyForwardDirection.x * m_EnemyVelocity * ts;
-			m_EnemyPosition.y += m_EnemyForwardDirection.y * m_EnemyVelocity * ts;
-		}
+		
+		m_Enemy.OnUpdate(ts, m_Player);
 
 		////////////////////////////////
 		/////////// CAMERA /////////////
@@ -407,24 +389,24 @@ namespace JSG {
 
 		if (Input::IsKeyPressed(GLFW_KEY_W)) 
 		{
-			m_CameraPosition.x += m_CameraUpDirection.x * m_CameraVelocity * ts;
-			m_CameraPosition.y += m_CameraUpDirection.y * m_CameraVelocity * ts;
+			m_CameraPosition.x += m_CameraUpDirection.x * m_CameraSpeed * ts;
+			m_CameraPosition.y += m_CameraUpDirection.y * m_CameraSpeed * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_S))
 		{
-			m_CameraPosition.x -= m_CameraUpDirection.x * m_CameraVelocity * ts;
-			m_CameraPosition.y -= m_CameraUpDirection.y * m_CameraVelocity * ts;
+			m_CameraPosition.x -= m_CameraUpDirection.x * m_CameraSpeed * ts;
+			m_CameraPosition.y -= m_CameraUpDirection.y * m_CameraSpeed * ts;
 		}
 		
 		if (Input::IsKeyPressed(GLFW_KEY_D))
 		{
-			m_CameraPosition.x += CameraRightDirection.x * m_CameraVelocity * ts;
-			m_CameraPosition.y += CameraRightDirection.y * m_CameraVelocity * ts;
+			m_CameraPosition.x += CameraRightDirection.x * m_CameraSpeed * ts;
+			m_CameraPosition.y += CameraRightDirection.y * m_CameraSpeed * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_A))
 		{
-			m_CameraPosition.x -= CameraRightDirection.x * m_CameraVelocity * ts;
-			m_CameraPosition.y -= CameraRightDirection.y * m_CameraVelocity * ts;
+			m_CameraPosition.x -= CameraRightDirection.x * m_CameraSpeed * ts;
+			m_CameraPosition.y -= CameraRightDirection.y * m_CameraSpeed * ts;
 		}
 
 		if (Input::IsKeyPressed(GLFW_KEY_Q))
@@ -456,7 +438,6 @@ namespace JSG {
 		// [1 0 0 2]  {0.5}        {1}       {0}     {0}   {2}       {0.5}   {2} 
 		// [0 1 0 3]  {0.5}	   0.5*{0} + 0.5*{1} + 0*{0} + {3}       {0.5} + {3} 
 		// [0 0 1 0]  {0}          {0}       {0}     {1}   {0}       {0}     {0}
-		
 	}
 
 	void Sandbox2D::OnRender() 
@@ -465,24 +446,19 @@ namespace JSG {
 		glClearColor(m_BackgroundColor.x, m_BackgroundColor.y, m_BackgroundColor.z, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		// Camera setup.
 		m_Camera.SetProjectionMatrix(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
 		m_Camera.SetPosition(m_CameraPosition);
 		m_Camera.SetRotation(m_CameraRotation);
 
-		/*
-		const glm::mat4 projectionMatrix = glm::ortho(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel, -1.0f, 1.0f);
-		glm::mat4 viewMatrix = glm::translate(glm::mat4(1), m_CameraPosition) 
-							 * glm::rotate(glm::mat4(1.0f), glm::radians(m_CameraRotation), glm::vec3(0, 0, 1));
-		viewMatrix = glm::inverse(viewMatrix);
-		*/
-
 		// Entities |
 		//			v
+
 		// Render Quad Floor.
 		{
-			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1), m_FloorPosition)
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), m_FloorPosition)
 										* glm::rotate(glm::mat4(1.0f), glm::radians(m_FloorRotation), glm::vec3(0, 0, 1))
-										* glm::scale(glm::mat4(1), glm::vec3(m_FloorSize));
+										* glm::scale(glm::mat4(1.0f), glm::vec3(m_FloorSize));
 
 			m_QuadShader.Bind();
 			m_QuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
@@ -495,14 +471,34 @@ namespace JSG {
 			m_QuadShader.SetFloat3("viewPos", m_Camera.GetPosition());
 
 			glBindVertexArray(m_QuadVertexArray);
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+		}
+
+		// Render Ball
+		{
+
+			m_BallShader.Bind();
+			m_BallShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
+			m_BallShader.SetMat4("u_View", m_Camera.GetViewMatrix());
+
+			for (size_t i = 0; i < m_Balls.size(); i++)
+			{
+				const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), m_Balls[i].GetPosition())
+											* glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
+											* glm::scale(glm::mat4(1.0f), glm::vec3(m_Balls[i].GetSize()));
+
+				m_BallShader.SetMat4("u_Model", ModelMatrix);
+
+				glBindVertexArray(m_BallVertexArray);
+				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+			}
 		}
 
 		// Render quad player
 		{
-			glm::mat4 ModelMatrix = glm::translate(glm::mat4(1), m_PlayerPosition)
-								  * glm::rotate(glm::mat4(1.0f), glm::radians(m_PlayerRotation), glm::vec3(0, 0, 1))
-								  * glm::scale(glm::mat4(1), glm::vec3(m_PlayerSize));
+			glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), m_Player.GetPosition())
+								  * glm::rotate(glm::mat4(1.0f), glm::radians(m_Player.GetRotation()), glm::vec3(0, 0, 1))
+								  * glm::scale(glm::mat4(1.0f), glm::vec3(m_Player.GetSize()));
 
 			if (Input::IsKeyPressed(GLFW_KEY_M))
 			{
@@ -516,18 +512,18 @@ namespace JSG {
 			m_QuadShader.SetFloat3("u_LightPos", m_LightCubePosition);
 			m_QuadShader.SetFloat3("u_LigthDirection", m_LigthCubeDirection);
 			m_QuadShader.SetFloat3("u_LightColor", m_LightCubeColor);
-			m_QuadShader.SetFloat3("u_ObjectColor", m_PlayerColor);
+			m_QuadShader.SetFloat3("u_ObjectColor", m_Player.GetColor());
 			m_QuadShader.SetFloat3("viewPos", m_Camera.GetPosition());
 
 			glBindVertexArray(m_QuadVertexArray);
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
 		}
 
 		// Render quad Enemy
 		{
-			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1), m_EnemyPosition)
-										* glm::rotate(glm::mat4(1.0f), glm::radians(m_EnemyRotation), glm::vec3(0, 0, 1))
-										* glm::scale(glm::mat4(1), glm::vec3(m_EnemySize));
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), m_Enemy.GetPosition())
+										* glm::rotate(glm::mat4(1.0f), glm::radians(m_Enemy.GetRotation()), glm::vec3(0, 0, 1))
+										* glm::scale(glm::mat4(1.0f), glm::vec3(m_Enemy.GetSize()));
 
 			m_QuadShader.Bind();
 			m_QuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
@@ -536,18 +532,18 @@ namespace JSG {
 			m_QuadShader.SetFloat3("u_LightPos", m_LightCubePosition);
 			m_QuadShader.SetFloat3("u_LigthDirection", m_LigthCubeDirection);
 			m_QuadShader.SetFloat3("u_LightColor", m_LightCubeColor);
-			m_QuadShader.SetFloat3("u_ObjectColor", m_EnemyColor);
+			m_QuadShader.SetFloat3("u_ObjectColor", m_Enemy.GetColor());
 			m_QuadShader.SetFloat3("viewPos", m_Camera.GetPosition());
 
 			glBindVertexArray(m_QuadVertexArray);
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
 		}
 
 		// Render Light Cube
 		{
-			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1), { m_LightCubePosition.x, m_LightCubePosition.y, 0.0 })
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { m_LightCubePosition.x, m_LightCubePosition.y, 0.0 })
 										* glm::rotate(glm::mat4(1.0f), glm::radians(m_LightCubeAngle), glm::vec3(0, 0, 1))
-								    	* glm::scale(glm::mat4(1), glm::vec3(0.25f));
+								    	* glm::scale(glm::mat4(1.0f), glm::vec3(0.25f));
 
 			m_CircleShader.Bind();
 			m_CircleShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
@@ -556,7 +552,7 @@ namespace JSG {
 			m_CircleShader.SetFloat3("u_Color", glm::vec3(1.0f, 1.0f, 1.0f));
 
 			glBindVertexArray(m_CircleVertexArray);
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
 		}
 		
 		// Render circles from the vector
@@ -566,15 +562,15 @@ namespace JSG {
 
 		for (size_t i = 0; i < m_Circles.size(); i++)
 		{
-			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1), m_Circles[i].GetPosition())
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), m_Circles[i].GetPosition())
 										* glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
-										* glm::scale(glm::mat4(1), glm::vec3(m_Circles[i].GetSize()));
+										* glm::scale(glm::mat4(1.0f), glm::vec3(m_Circles[i].GetSize()));
 
 			m_CircleShader.SetMat4("u_Model", ModelMatrix);
 			m_CircleShader.SetFloat3("u_Color", m_Circles[i].GetColor());
 
 			glBindVertexArray(m_CircleVertexArray);
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
 		}
 
 		// Render a dot in origo
@@ -603,14 +599,6 @@ namespace JSG {
 		Application* app = Application::Get();
 
 		// TODO: UPPDATERA EDIT TOOL!
-
-		//V1 info
-		ImGui::Begin("Vector");
-		ImGui::SliderFloat("Rotation slider", &m_VectorRotation, 0.0f, 360.0f);
-		ImGui::Text("X-coord: cos(%f) = %f", m_VectorRotation, m_Vector.x);
-		ImGui::Text("Y-coord: sin(%f) = %f", m_VectorRotation, m_Vector.y);
-		ImGui::End();
-
 		// CAMERA
 		ImGui::Begin("CAMERA");
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "CONTROLS");
@@ -631,9 +619,9 @@ namespace JSG {
 		ImGui::Text("Change Direction: Left & Right arrow key.");
 		ImGui::Text(" ");
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "INFORMATION");
-		ImGui::Text("Rotation Angle: %f", m_PlayerRotation);
-		ImGui::Text("Size: %f", m_PlayerSize);
-		ImGui::Text("Position: { %f, %f }", m_PlayerPosition.x, m_PlayerPosition.y);
+		ImGui::Text("Rotation Angle: %f", m_Player.GetRotation());
+		ImGui::Text("Size: %f", m_Player.GetSize());
+		ImGui::Text("Position: { %f, %f }", m_Player.GetPosition().x, m_Player.GetPosition().y);
 		ImGui::End();
 		
 		// ENEMY
@@ -643,9 +631,9 @@ namespace JSG {
 		ImGui::Text("Change Direction: J & L keys.");
 		ImGui::Text(" ");
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "INFORMATION");
-		ImGui::Text("Rotation Angle: %f", m_EnemyRotation);
-		ImGui::Text("Size: %f", m_EnemySize);
-		ImGui::Text("Position: { %f, %f }", m_EnemyPosition.x, m_EnemyPosition.y);
+		ImGui::Text("Rotation Angle: %f", m_Enemy.GetRotation());
+		ImGui::Text("Size: %f", m_Enemy.GetSize());
+		ImGui::Text("Position: { %f, %f }", m_Enemy.GetPosition().x, m_Enemy.GetPosition().y);
 		ImGui::End();
 
 		// Window
@@ -655,7 +643,6 @@ namespace JSG {
 		ImGui::Text("Wondow Width: %f", static_cast<float>(app->GetWindow().GetWidth()));
 		ImGui::Text("Window Aspect Ratio: %f", m_AspectRatio);
 		ImGui::End();
-
 
 		////////////////////////////////////
 		/////////// EDIT TOOL /////////////
@@ -681,8 +668,7 @@ namespace JSG {
 			m_Circles.clear();
 		}
 		ImGui::Text("");
-
-
+		
 		// Floor Settings 
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Floor Settings");
 		ImGui::ColorEdit4("Floor Color", reinterpret_cast<float*>(&m_FloorColor));
@@ -690,7 +676,7 @@ namespace JSG {
 
 		// Player Settings
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Player Settings");
-		ImGui::ColorEdit4("Player Color", reinterpret_cast<float*>(&m_PlayerColor));
+		ImGui::ColorEdit4("Player Color", reinterpret_cast<float*>(&m_Player.GetColor()));
 		ImGui::Text(" ");
 		ImGui::End();
 	}
@@ -706,15 +692,50 @@ namespace JSG {
 	{
 		m_ZoomLevel += e.GetYOffset() * 0.5f;
 		m_ZoomLevel = std::max(m_ZoomLevel, 0.50f);
+
 		return false;
 	}
 
 	bool Sandbox2D::OnMouseButtonPressed(const MouseButtonPressedEvent& e)
 	{
-		if (GLFW_MOUSE_BUTTON_2 == e.GetMouseButton())
-			m_Circles.emplace_back(Circle(m_VCircleSize, m_Camera.GetPosition(), m_VColor));
-		
+		// Assume you have access to your window width/height, view matrix, and projection matrix
+		int windowWidth = Application::Get()->GetWindow().GetWidth();  // Replace with your actual window width variable
+		int windowHeight = Application::Get()->GetWindow().GetHeight(); // Replace with your actual window height variable
+
+		// Get mouse position (assuming you store it as member variables or get it via function)
+		double mouseX = Input::GetMousePositionX(); // Example of how you might get the current mouse X
+		double mouseY = Input::GetMousePositionY(); // Example of how you might get the current mouse Y
+
+		// Define the screen position vector
+		// OpenGL expects the Y origin to be bottom-left, but GLFW reports Y from top-left.
+		// So we must flip the Y coordinate:
+		glm::vec3 winCoords(mouseX, windowHeight - mouseY, 0.0f); // Z is 0 for the near plane
+
+		// Define the viewport
+		glm::vec4 viewport(0.0f, 0.0f, (float)windowWidth, (float)windowHeight);
+
+		// Get your current matrices (replace with actual calls to your camera/renderer class)
+		glm::mat4 viewMatrix = m_Camera.GetViewMatrix();
+		glm::mat4 projectionMatrix = m_Camera.GetProjectionMatrix();
+
+		// Unproject the coordinates
+		glm::vec3 worldPosition = glm::unProject(
+			winCoords,
+			viewMatrix,
+			projectionMatrix,
+			viewport
+		);
+
+		// Now use the calculated worldPosition for your ball
+		// Note: If you are working in a 2D environment, you might need to adjust the Z coordinate 
+		// of the resulting worldPosition to match your game plane (e.g., set worldPosition.z = 0.0f).
+		m_Balls.emplace_back(worldPosition, glm::vec3(1.0f, 0.0f, 0.0f), 1.0f);
 		return false;
+		
+	//	if (GLFW_MOUSE_BUTTON_2 == e.GetMouseButton() && m_Circles.size() <= 20)
+	//		m_Balls.emplace_back(m_Camera.GetPosition(), glm::vec3(1.0f, 0.0f, 0.0f), 1.0f);
+	
+	//	return false;
 	}
 
 }

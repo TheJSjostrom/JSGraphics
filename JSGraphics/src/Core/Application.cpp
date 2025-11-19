@@ -33,6 +33,8 @@ namespace JSG {
 		// Application Loop
 		while (m_Running)
 		{
+			Sandbox2D&& sand = Sandbox2D();
+	
 			float time = static_cast<float>(glfwGetTime());
 			float timestep = time - m_LastFrameTime;
 			m_LastFrameTime = time;
@@ -60,12 +62,14 @@ namespace JSG {
 	bool Application::OnWindowClose(const WindowCloseEvent& e)
 	{
 		m_Running = false;
+
 		return true;
 	}
 
 	bool Application::OnWindowResize(const WindowResizeEvent& e)
 	{
 		glViewport(0, 0, e.GetWidth(), e.GetHeight());
+
 		return true;
 	}
 

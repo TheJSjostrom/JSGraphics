@@ -8,5 +8,4 @@ namespace JSG {
 		m_Color(color)
 	{
 	}
-
 }
