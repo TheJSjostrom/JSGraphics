@@ -7,7 +7,7 @@ namespace JSG {
 	{
 	}
 
-	void Camera::CalculateViewMatrix()
+	void Camera::UpdateViewMatrix()
 	{
 		const glm::mat4 CameraMatrix = glm::translate(glm::mat4(1), m_Position) 
 									 * glm::rotate(glm::mat4(1.0f), glm::radians(m_Rotation), glm::vec3(0, 0, 1));

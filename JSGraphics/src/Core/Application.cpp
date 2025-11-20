@@ -33,8 +33,6 @@ namespace JSG {
 		// Application Loop
 		while (m_Running)
 		{
-			Sandbox2D&& sand = Sandbox2D();
-	
 			float time = static_cast<float>(glfwGetTime());
 			float timestep = time - m_LastFrameTime;
 			m_LastFrameTime = time;

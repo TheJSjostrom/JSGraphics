@@ -6,18 +6,9 @@ namespace JSG {
 
 	void Player::OnUpdate(float ts)
 	{
-		m_ForwardDirection = { glm::cos(glm::radians(m_Rotation)), glm::sin(glm::radians(m_Rotation)), 0.0f };
-		m_ForwardDirection = glm::normalize(m_ForwardDirection);
-
-		const bool isWalking = Input::IsKeyPressed(GLFW_KEY_UP) || Input::IsKeyPressed(GLFW_KEY_DOWN);
-		if (isWalking)
-		{
-			m_CurrentState = PlayerState::Walk;
-		}
-		else
-		{
-			m_CurrentState = PlayerState::Idle;
-		}
+		HandleRotation(ts);
+		UpdateForwardDirection();
+		DeterminePlayerState();
 	
 		switch (m_CurrentState)
 		{
@@ -27,30 +18,47 @@ namespace JSG {
 		case PlayerState::Walk:
 			UpdateWalkState(ts);
 			break;
+		case PlayerState::Run:
+			UpdateRunState(ts);
+			break;
 		}
+	}
 
-		// PLAYER ROTATION
+	void Player::HandleRotation(float ts)
+	{
 		if (Input::IsKeyPressed(GLFW_KEY_LEFT))
 		{
-			m_Rotation += m_RotationVelocity * ts;
+			m_Rotation += m_RotationSpeed * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_RIGHT))
 		{
-			m_Rotation -= m_RotationVelocity * ts;
+			m_Rotation -= m_RotationSpeed * ts;
 		}
+	}
 
-		// PLAYER SIZE
-		if (Input::IsKeyPressed(GLFW_KEY_LEFT_SHIFT))
+	void Player::UpdateForwardDirection()
+	{
+		m_ForwardDirection = { glm::cos(glm::radians(m_Rotation)), glm::sin(glm::radians(m_Rotation)), 0.0f };
+		m_ForwardDirection = glm::normalize(m_ForwardDirection);
+	}
+
+	void Player::DeterminePlayerState()
+	{
+		const bool isWalking = Input::IsKeyPressed(GLFW_KEY_UP) || Input::IsKeyPressed(GLFW_KEY_DOWN);
+		const bool isRunning = (Input::IsKeyPressed(GLFW_KEY_UP) || Input::IsKeyPressed(GLFW_KEY_DOWN)) && Input::IsKeyPressed(GLFW_KEY_LEFT_SHIFT);
+
+		if (isRunning)
 		{
-			m_Size += m_SizeVelocity * ts;
+			m_CurrentState = PlayerState::Run;
 		}
-		else if (Input::IsKeyPressed(GLFW_KEY_X))
+		else if (isWalking)
 		{
-			m_Size -= m_SizeVelocity * ts;
+			m_CurrentState = PlayerState::Walk;
 		}
-
-		m_Size = std::max(m_Size, 0.5f);
-
+		else
+		{
+			m_CurrentState = PlayerState::Idle;
+		}
 	}
 
 	void Player::UpdateIdleState(float ts)
@@ -60,10 +68,25 @@ namespace JSG {
 
 	void Player::UpdateWalkState(float ts)
 	{
+		m_Speed = 4.0f;
+		m_Color = { 0.0f, 1.0f, 0.0f };
+
+		HandleMovement(ts);
+	}
+
+	void Player::UpdateRunState(float ts)
+	{
+		m_Speed = 8.0f;
+
 		m_RotationValue += 4.0f * ts;
 		float CosValue = glm::abs(glm::cos(m_RotationValue));
 		m_Color = { 0.0f, CosValue, 0.0f };
 
+		HandleMovement(ts);
+	}
+
+	void Player::HandleMovement(float ts)
+	{
 		if (Input::IsKeyPressed(GLFW_KEY_UP))
 		{
 			m_Position.x += m_ForwardDirection.x * m_Speed * ts;
@@ -74,7 +97,9 @@ namespace JSG {
 			m_Position.x -= m_ForwardDirection.x * m_Speed * ts;
 			m_Position.y -= m_ForwardDirection.y * m_Speed * ts;
 		}
-
 	}
+
+
+
 
 }
