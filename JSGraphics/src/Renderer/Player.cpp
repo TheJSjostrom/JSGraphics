@@ -9,7 +9,8 @@ namespace JSG {
 		HandleRotation(ts);
 		UpdateForwardDirection();
 		DeterminePlayerState();
-	
+		HandleMovement(ts);
+
 		switch (m_CurrentState)
 		{
 		case PlayerState::Idle:
@@ -69,20 +70,17 @@ namespace JSG {
 	void Player::UpdateWalkState(float ts)
 	{
 		m_Speed = 4.0f;
-		m_Color = { 0.0f, 1.0f, 0.0f };
 
-		HandleMovement(ts);
+		m_Color = { 0.0f, 0.5f, 0.0f };
 	}
 
 	void Player::UpdateRunState(float ts)
 	{
 		m_Speed = 8.0f;
 
-		m_RotationValue += 4.0f * ts;
-		float CosValue = glm::abs(glm::cos(m_RotationValue));
-		m_Color = { 0.0f, CosValue, 0.0f };
-
-		HandleMovement(ts);
+		m_PulseTimer += 4.0f * ts;
+		const float colorIntensity = glm::abs(glm::cos(m_PulseTimer));
+		m_Color = { 0.0f, colorIntensity, 0.0f };
 	}
 
 	void Player::HandleMovement(float ts)
@@ -98,8 +96,4 @@ namespace JSG {
 			m_Position.y -= m_ForwardDirection.y * m_Speed * ts;
 		}
 	}
-
-
-
-
 }

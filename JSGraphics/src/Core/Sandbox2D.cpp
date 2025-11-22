@@ -33,7 +33,7 @@ namespace JSG {
 		glBindVertexArray(m_BallVertexArray);
 
 		float BallVertices[4 * 6] = {
-			//  Position         Local Position
+		//  Position            Local Position
 			-0.5f, -0.5f, 0.0f, -1.0f, -1.0f, 0.0f, // Vertex Index 0
 			 0.5f, -0.5f, 0.0f,  1.0f, -1.0f, 0.0f, // Vertex Index 1
 			 0.5f,  0.5f, 0.0f,  1.0f,  1.0f, 0.0f, // Vertex Index 2
@@ -99,11 +99,11 @@ namespace JSG {
 		glBindVertexArray(m_LightCubeVertexArray);
 
 		float LightCubeVertices[4 * 6] = {
-			//   Position          Normal
-				-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 0
-				 0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 1
-				 0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 2
-				-0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f  // Vertex Index 3
+		//  Position          Normal
+			-0.5f,-0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 0
+			 0.5f,-0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 1
+			 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 2
+			-0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f  // Vertex Index 3
 		};
 
 		m_LightCubeVertexBuffer.Init(sizeof(LightCubeVertices), LightCubeVertices);
@@ -150,11 +150,11 @@ namespace JSG {
 		glBindVertexArray(m_QuadVertexArray);
 
 		float QuadVertices[4 * 6] = {
-     	//   Position          Normal
-			-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 0
-			 0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 1
-			 0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 2
-			-0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f  // Vertex Index 3
+     	//  Position          Normal
+			-0.5f,-0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 0
+			 0.5f,-0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 1
+			 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 2
+			-0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f  // Vertex Index 3
 		};
 
 		m_QuadVertexBuffer.Init(sizeof(QuadVertices), QuadVertices);
@@ -238,11 +238,11 @@ namespace JSG {
 		glBindVertexArray(m_CircleVertexArray);
 
 		float CircleVertices[4 * 6] = {
-			//  Position         Local Position
-			-0.5f, -0.5f, 0.0f, -1.0f, -1.0f, 0.0f, // Vertex Index 0
-			 0.5f, -0.5f, 0.0f,  1.0f, -1.0f, 0.0f, // Vertex Index 1
-			 0.5f,  0.5f, 0.0f,  1.0f,  1.0f, 0.0f, // Vertex Index 2
-			-0.5f,  0.5f, 0.0f, -1.0f,  1.0f, 0.0f  // Vertex Index 3
+		//  Position          Local Position
+			-0.5f,-0.5f, 0.0f,-1.0f,-1.0f, 0.0f, // Vertex Index 0
+			 0.5f,-0.5f, 0.0f, 1.0f,-1.0f, 0.0f, // Vertex Index 1
+			 0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, // Vertex Index 2
+			-0.5f, 0.5f, 0.0f,-1.0f, 1.0f, 0.0f  // Vertex Index 3
 		};
 
 		m_CircleVertexBuffer.Init(sizeof(CircleVertices), CircleVertices);

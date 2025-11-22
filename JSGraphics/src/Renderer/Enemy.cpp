@@ -10,9 +10,10 @@ namespace JSG {
 		HandleRotation(ts);
 		UpdateForwardDirection();
 		HandleMovement(ts);
+		
 		const EnemyFOVData enemyFOVData = DetermineEnemyState(player);
 
-		switch (m_CurrentState) 
+		switch (m_CurrentState)
 		{
 		case EnemyState::Idle:
 			UpdateIdleState(ts);
@@ -55,23 +56,21 @@ namespace JSG {
 		}
 	}
 
-	EnemyFOVData Enemy::DetermineEnemyState(const Player& player)
+	const EnemyFOVData Enemy::DetermineEnemyState(const Player& player)
 	{
-		EnemyFOVData enemyFOVData;
-
 		const glm::vec3& playerPosition = player.GetPosition();
 		// Calculate the Displacement vector of Player Position and Enemy Position.
-		const glm::vec3 DisplacementVector = playerPosition - m_Position;
+		const glm::vec3 displacementVector = playerPosition - m_Position;
 		// Calculate the length of the DisplacementVectorLength vector.
-		enemyFOVData.DisplacementVectorLength = glm::length(DisplacementVector);
+		const float displacementVectorLength = glm::length(displacementVector);
 		// Normalize The Displacement vector.
-		enemyFOVData.DisplacementVectorNormalized = glm::normalize(DisplacementVector);
+		const glm::vec3 displacementVectorNormalized = glm::normalize(displacementVector);
 		// Calculate the Dot Product of m_EnemyForwardDirection and DisplacementVectorNormalized vectors.
-		const float DotProduct = glm::dot(m_ForwardDirection, enemyFOVData.DisplacementVectorNormalized);
+		const float dotProduct = glm::dot(m_ForwardDirection, displacementVectorNormalized);
 		// Calculate the angle - in degrees - between NormalizedDisplacementVector and m_EnemyForwardDirection vectors.
-		enemyFOVData.AngleDegrees = glm::degrees(glm::acos(glm::clamp(DotProduct / (glm::length(enemyFOVData.DisplacementVectorNormalized) * glm::length(m_ForwardDirection)), -1.0f, 1.0f)));
+		const float angleDegrees = glm::degrees(glm::acos(glm::clamp(dotProduct / (glm::length(displacementVectorNormalized) * glm::length(m_ForwardDirection)), -1.0f, 1.0f)));
 
-		if (enemyFOVData.AngleDegrees <= m_FOVAngle && enemyFOVData.DisplacementVectorLength <= m_FOVRange)
+		if (angleDegrees <= m_FOVAngle && displacementVectorLength <= m_FOVRange)
 		{
 			m_CurrentState = EnemyState::Chase;
 		}
@@ -80,25 +79,29 @@ namespace JSG {
 			m_CurrentState = EnemyState::Idle;
 		}
 
-		return enemyFOVData;
+		return EnemyFOVData(displacementVectorLength, displacementVectorNormalized);
 	}
 
 	void Enemy::UpdateChaseState(float ts, float playerHitBox, const EnemyFOVData& enemyFOVData)
 	{
 		if (enemyFOVData.DisplacementVectorLength >= playerHitBox)
 		{
-			m_Rotation = glm::degrees(glm::atan(m_ForwardDirection.y, m_ForwardDirection.x));
-			const float DisplacementVectorNormalizedAngle = glm::degrees(glm::atan(enemyFOVData.DisplacementVectorNormalized.y, enemyFOVData.DisplacementVectorNormalized.x));
-			m_Rotation = DisplacementVectorNormalizedAngle;
+			const float displacementVectorNormalizedAngle = glm::degrees(glm::atan(enemyFOVData.DisplacementVectorNormalized.y, enemyFOVData.DisplacementVectorNormalized.x));
+			m_Rotation = displacementVectorNormalizedAngle;
 			m_ForwardDirection = enemyFOVData.DisplacementVectorNormalized;
 
 			m_Position.x += m_ForwardDirection.x * m_Speed * ts;
 			m_Position.y += m_ForwardDirection.y * m_Speed * ts;
 		}
 
-		m_RotationValue += 4.0f * ts;
-		float CosValue = glm::abs(glm::cos(m_RotationValue));
-		m_Color = { CosValue, 0.0f, 0.0f };
+		UpdateColorPulse(ts);
+	}
+
+	void Enemy::UpdateColorPulse(float ts)
+	{
+		m_PulseTimer += 4.0f * ts;
+		const float colorIntensity = glm::abs(glm::cos(m_PulseTimer));
+		m_Color = { colorIntensity, 0.0f, 0.0f };
 	}
 
 	void Enemy::UpdateIdleState(float ts)

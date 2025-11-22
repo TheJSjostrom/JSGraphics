@@ -37,13 +37,15 @@ namespace JSG {
 		glm::vec3 m_Color = { 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_ForwardDirection = { 0.0f, 1.0f, 0.0f };
 
+		float m_CooldownTime = 2.0f;
+		float m_CurrentCooldown = 0.0f;
 		float m_RotationSpeed = 180.0f;
 		float m_Speed = 4.0f;
 		float m_SizeVelocity = 1.0f;
 		float m_Size = 1.0f;
 		float m_Rotation = 90.0f;
 		float m_HitBox = 1.25f;
-		float m_RotationValue = 0.0f;
+		float m_PulseTimer = 0.0f;
 	};
 
 }
