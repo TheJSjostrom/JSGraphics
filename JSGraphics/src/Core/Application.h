@@ -29,7 +29,7 @@ namespace JSG {
 		std::unique_ptr<Sandbox> m_Sandbox2D;
 
 		float m_LastFrameTime = 0.0f;
-		bool m_Running = true;
+		bool m_IsRunning = true;
 	private:
 		static Application* s_Instance;
 	};

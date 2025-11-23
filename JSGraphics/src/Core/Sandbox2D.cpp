@@ -387,26 +387,25 @@ namespace JSG {
 		m_CameraUpDirection = { glm::cos(glm::radians(90.0f + m_CameraRotation)), glm::sin(glm::radians(90.0f + m_CameraRotation)), 0.0f };
 		m_CameraUpDirection = glm::normalize(m_CameraUpDirection);
 
+		const glm::vec3 cameraUpVelocity = m_CameraUpDirection * m_CameraSpeed * ts;
+		const glm::vec3 cameraRightVelocity = CameraRightDirection * m_CameraSpeed * ts;
+
 		if (Input::IsKeyPressed(GLFW_KEY_W)) 
 		{
-			m_CameraPosition.x += m_CameraUpDirection.x * m_CameraSpeed * ts;
-			m_CameraPosition.y += m_CameraUpDirection.y * m_CameraSpeed * ts;
+			m_CameraPosition += cameraUpVelocity;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_S))
 		{
-			m_CameraPosition.x -= m_CameraUpDirection.x * m_CameraSpeed * ts;
-			m_CameraPosition.y -= m_CameraUpDirection.y * m_CameraSpeed * ts;
+			m_CameraPosition -= cameraUpVelocity;
 		}
 		
 		if (Input::IsKeyPressed(GLFW_KEY_D))
 		{
-			m_CameraPosition.x += CameraRightDirection.x * m_CameraSpeed * ts;
-			m_CameraPosition.y += CameraRightDirection.y * m_CameraSpeed * ts;
+			m_CameraPosition += cameraRightVelocity;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_A))
 		{
-			m_CameraPosition.x -= CameraRightDirection.x * m_CameraSpeed * ts;
-			m_CameraPosition.y -= CameraRightDirection.y * m_CameraSpeed * ts;
+			m_CameraPosition -= cameraRightVelocity;
 		}
 
 		if (Input::IsKeyPressed(GLFW_KEY_Q))

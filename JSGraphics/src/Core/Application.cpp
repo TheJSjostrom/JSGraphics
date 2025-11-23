@@ -31,13 +31,13 @@ namespace JSG {
 	void Application::Run()
 	{
 		// Application Loop
-		while (m_Running)
+		while (m_IsRunning)
 		{
-			float time = static_cast<float>(glfwGetTime());
-			float timestep = time - m_LastFrameTime;
+			const float time = static_cast<float>(glfwGetTime());
+			const float timeStep = time - m_LastFrameTime;
 			m_LastFrameTime = time;
 
-			m_Sandbox2D->OnUpdate(timestep);
+			m_Sandbox2D->OnUpdate(timeStep);
 			m_Sandbox2D->OnRender();
 
 			ImGuiUI::Begin();
@@ -59,7 +59,7 @@ namespace JSG {
 
 	bool Application::OnWindowClose(const WindowCloseEvent& e)
 	{
-		m_Running = false;
+		m_IsRunning = false;
 
 		return true;
 	}

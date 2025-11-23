@@ -15,7 +15,7 @@ namespace JSG {
 	public:
 		void OnUpdate(float ts);
 
-		const glm::vec3& GetFarwardDirection() const { return m_ForwardDirection; }
+		const glm::vec3& GetForwardDirection() const { return m_ForwardDirection; }
 		const glm::vec3& GetPosition() const { return m_Position; }
 		glm::vec3& GetColor() { return m_Color; }
 

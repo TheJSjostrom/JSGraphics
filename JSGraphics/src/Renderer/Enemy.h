@@ -18,7 +18,7 @@ namespace JSG {
 
 	enum class EnemyState 
 	{ 
-		Idle, 
+		Idle,
 		Chase
 	};
 
@@ -32,9 +32,7 @@ namespace JSG {
 		float GetRotation() const { return m_Rotation; }
 		float GetSize() const { return m_Size; }
 	private:
-		void HandleRotation(float ts);
 		void UpdateForwardDirection();
-		void HandleMovement(float ts);
 		const EnemyFOVData DetermineEnemyState(const Player& player);
 		void UpdateChaseState(float ts, float playerHitBox, const EnemyFOVData& enemyFOVData);
 		void UpdateColorPulse(float ts);

@@ -7,9 +7,7 @@ namespace JSG {
 
 	void Enemy::OnUpdate(float ts, const Player& player)
 	{
-		HandleRotation(ts);
 		UpdateForwardDirection();
-		HandleMovement(ts);
 		
 		const EnemyFOVData enemyFOVData = DetermineEnemyState(player);
 
@@ -24,36 +22,10 @@ namespace JSG {
 		}
 	}
 
-	void Enemy::HandleRotation(float ts)
-	{
-		if (Input::IsKeyPressed(GLFW_KEY_J))
-		{
-			m_Rotation += 180.0f * ts;
-		}
-		else if (Input::IsKeyPressed(GLFW_KEY_L))
-		{
-			m_Rotation -= 180.0f * ts;
-		}
-	}
-
 	void Enemy::UpdateForwardDirection()
 	{
 		m_ForwardDirection = { glm::cos(glm::radians(m_Rotation)), glm::sin(glm::radians(m_Rotation)), 0.0f };
 		m_ForwardDirection = glm::normalize(m_ForwardDirection);
-	}
-
-	void Enemy::HandleMovement(float ts)
-	{
-		if (Input::IsKeyPressed(GLFW_KEY_I))
-		{
-			m_Position.x += m_ForwardDirection.x * m_Speed * ts;
-			m_Position.y += m_ForwardDirection.y * m_Speed * ts;
-		}
-		else if (Input::IsKeyPressed(GLFW_KEY_K))
-		{
-			m_Position.x -= m_ForwardDirection.x * m_Speed * ts;
-			m_Position.y -= m_ForwardDirection.y * m_Speed * ts;
-		}
 	}
 
 	const EnemyFOVData Enemy::DetermineEnemyState(const Player& player)
@@ -79,7 +51,7 @@ namespace JSG {
 			m_CurrentState = EnemyState::Idle;
 		}
 
-		return EnemyFOVData(displacementVectorLength, displacementVectorNormalized);
+		return { displacementVectorLength, displacementVectorNormalized };
 	}
 
 	void Enemy::UpdateChaseState(float ts, float playerHitBox, const EnemyFOVData& enemyFOVData)
@@ -90,8 +62,8 @@ namespace JSG {
 			m_Rotation = displacementVectorNormalizedAngle;
 			m_ForwardDirection = enemyFOVData.DisplacementVectorNormalized;
 
-			m_Position.x += m_ForwardDirection.x * m_Speed * ts;
-			m_Position.y += m_ForwardDirection.y * m_Speed * ts;
+			const glm::vec3 velocity = m_ForwardDirection * m_Speed * ts;
+			m_Position += velocity;
 		}
 
 		UpdateColorPulse(ts);

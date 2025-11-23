@@ -16,10 +16,54 @@ void* operator new(size_t size)
 	return ptr;
 }
 */
+
+class Player
+{
+public:
+
+	Player() = default;
+
+	Player(float x, float y, float z) :
+		m_X(x),
+		m_Y(y),
+		m_Z(z)
+	{
+		std::cout << "Construction " << m_X << std::endl;
+	}
+
+	~Player()
+	{
+		std::cout << "Destruction " << m_X << std::endl;
+	}
+
+	Player(const Player& other) :
+		m_X(other.m_X),
+		m_Y(other.m_Y),
+		m_Z(other.m_Z)
+	{
+		s_CopiedCount++;
+		std::cout << "Copied " << other.m_X << std::endl;
+	}
+
+	Player(Player&& other) noexcept :
+		m_X(other.m_X),
+		m_Y(other.m_Y),
+		m_Z(other.m_Z)
+	{
+		s_MoveCount++;
+		std::cout << "Moved " << other.m_X << std::endl;
+	}
+
+	float GetX() const { return m_X; }
+private:
+	float m_X, m_Y, m_Z;
+};
+
 class String
 {
 public:
-	String(const char* name) :
+	String(const char* name, const Player& pl) :
+		m_Player(pl),
 		m_Size(strlen(name) + 1),
 		m_Data(new char[m_Size])
 	{
@@ -58,48 +102,12 @@ public:
 
 	uint32_t GetSize() const { return m_Size; }
 private:
+	Player m_Player;
 	char* m_Data;
 	uint32_t m_Size;
 };
 
-class Player
-{
-public:
-	Player(float x, float y, float z) :
-		m_X(x),
-		m_Y(y),
-		m_Z(z)
-	{
-		std::cout << "Construction " << m_X << std::endl;
-	}
 
-	~Player()
-	{
-		std::cout << "Destruction " << m_X << std::endl;
-	}
-
-	Player(const Player& other) :
-		m_X(other.m_X),
-		m_Y(other.m_Y),
-		m_Z(other.m_Z)
-	{
-		s_CopiedCount++;
-		std::cout << "Copied " << other.m_X << std::endl;
-	}
-
-	Player(Player&& other) noexcept :
-		m_X(other.m_X),
-		m_Y(other.m_Y),
-		m_Z(other.m_Z)
-	{
-		s_MoveCount++;
-		std::cout << "Moved " << other.m_X << std::endl;
-	}
-
-	float GetX() const { return m_X; }
-private:
-	float m_X, m_Y, m_Z;
-};
 
 
 class Human

@@ -70,14 +70,12 @@ namespace JSG {
 	void Player::UpdateWalkState(float ts)
 	{
 		m_Speed = 4.0f;
-
 		m_Color = { 0.0f, 0.5f, 0.0f };
 	}
 
 	void Player::UpdateRunState(float ts)
 	{
 		m_Speed = 8.0f;
-
 		m_PulseTimer += 4.0f * ts;
 		const float colorIntensity = glm::abs(glm::cos(m_PulseTimer));
 		m_Color = { 0.0f, colorIntensity, 0.0f };
@@ -85,15 +83,15 @@ namespace JSG {
 
 	void Player::HandleMovement(float ts)
 	{
+		const glm::vec3 velocity = m_ForwardDirection * m_Speed * ts;
+
 		if (Input::IsKeyPressed(GLFW_KEY_UP))
 		{
-			m_Position.x += m_ForwardDirection.x * m_Speed * ts;
-			m_Position.y += m_ForwardDirection.y * m_Speed * ts;
+			m_Position += velocity;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_DOWN))
 		{
-			m_Position.x -= m_ForwardDirection.x * m_Speed * ts;
-			m_Position.y -= m_ForwardDirection.y * m_Speed * ts;
+			m_Position -= velocity;
 		}
 	}
 }

@@ -16,7 +16,7 @@ namespace JSG {
 		void SetRotation(float rotation) { m_Rotation = rotation; UpdateViewMatrix(); }
 
 		const glm::mat4& GetViewMatrix() const { return m_ViewMatrix; }
-
+		
 		void SetProjectionMatrix(float left, float right, float bottom, float top) { m_ProjectionMatrix = glm::ortho(left, right, bottom, top, -1.0f, 1.0f); }
 		const glm::mat4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 	private:
