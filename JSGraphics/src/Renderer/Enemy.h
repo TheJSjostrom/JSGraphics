@@ -4,24 +4,26 @@
 
 namespace JSG {
 
-	struct EnemyFOVData
+	struct PerceptionData
 	{
 		float DisplacementVectorLength;
-		glm::vec3 DisplacementVectorNormalized;
-	
-		EnemyFOVData(float length, const glm::vec3& normalized) :
+		float FOVAngleDegrees;
+		float TargetDirectionAngle;
+
+		PerceptionData(float length, float FOVAngle, float targetDirectionAngle) :
 			DisplacementVectorLength(length),
-			DisplacementVectorNormalized(normalized)
-		{
-		}
+			FOVAngleDegrees(FOVAngle),
+			TargetDirectionAngle(targetDirectionAngle)
+		{}
 	};
 
-	enum class EnemyState 
+	enum class EnemyState
 	{ 
 		Idle,
-		Chase
+		Chase,
+		Angry
 	};
-
+	
 	class Enemy
 	{
 	public:
@@ -33,8 +35,11 @@ namespace JSG {
 		float GetSize() const { return m_Size; }
 	private:
 		void UpdateForwardDirection();
-		const EnemyFOVData DetermineEnemyState(const Player& player);
-		void UpdateChaseState(float ts, float playerHitBox, const EnemyFOVData& enemyFOVData);
+		const PerceptionData DetermineEnemyState(const Player& player);
+		const PerceptionData CalculatePerceptionData(const Player& player);
+		void UpdateAngryState(float ts, float playerHitBox, const PerceptionData& perceptionData);
+		void UpdateChaseState(float ts, float playerHitBox, const PerceptionData& perceptionData);
+		void UpdateOrientation(const PerceptionData& perceptionData);
 		void UpdateColorPulse(float ts);
 		void UpdateIdleState(float ts);
 	private:
@@ -45,11 +50,13 @@ namespace JSG {
 		glm::vec3 m_Color = { 1.0f, 0.0f, 0.0f };
 
 		float m_Speed = 4.0f;
-		float m_FOVRange = 10.0f;
+		float m_FOVRange = 20.0f;
 		float m_FOVAngle = 45.0f;
 		float m_Rotation = -90.0f;
 		float m_Size = 1.0f;
-		const float FACING_THRESHOLD = 0.996f;
 		float m_PulseTimer = 0.0f;
+
+		float m_ChaseTime = 0.0f;
+		float m_AngryChaseTime = 0.0f;
 	};
 }

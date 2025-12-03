@@ -22,10 +22,10 @@
 	glm::vec2 Input::GetMousePosition()
 	{
 		Application& app = *Application::Get();
-		double XPos, YPos;
-		glfwGetCursorPos(app.GetWindow().GetNativeWindow(), &XPos, &YPos);
+		double xPos, yPos;
+		glfwGetCursorPos(app.GetWindow().GetNativeWindow(), &xPos, &yPos);
 		
-		return { static_cast<float>(XPos), static_cast<float>(YPos) };
+		return { static_cast<float>(xPos), static_cast<float>(yPos) };
 	}
 
 	float Input::GetMousePositionX()

@@ -356,6 +356,11 @@ namespace JSG {
 		///////////////////////////////
 
 		m_Player.OnUpdate(ts);
+		
+		if (m_Player.GetPosition().x >= 25.0f)
+		{
+			m_Player.Jump(ts); // Calls the public command method once per press
+		}
 
 		////////////////////////////////
 		///////////  BALL  ////////////
@@ -480,11 +485,12 @@ namespace JSG {
 			m_BallShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
 			m_BallShader.SetMat4("u_View", m_Camera.GetViewMatrix());
 
-			for (size_t i = 0; i < m_Balls.size(); i++)
+
+			for (const auto& ball : m_Balls) 
 			{
-				const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), m_Balls[i].GetPosition())
+				const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), ball.GetPosition())
 											* glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
-											* glm::scale(glm::mat4(1.0f), glm::vec3(m_Balls[i].GetSize()));
+											* glm::scale(glm::mat4(1.0f), glm::vec3(ball.GetSize()));
 
 				m_BallShader.SetMat4("u_Model", ModelMatrix);
 
@@ -584,6 +590,7 @@ namespace JSG {
 
 			glm::mat4 modelMatrix = glm::translate(glm::mat4(1), { 0.0f, 0.0f, 0.0f }) 
 								  * glm::scale(glm::mat4(1), glm::vec3(0.009f, 0.009f, 0.009f));
+
 			m_CircleShader.SetMat4("u_Model", modelMatrix);
 			m_CircleShader.SetFloat3("u_Color", {1.0f, 1.0f, 1.0f});
 

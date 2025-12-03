@@ -46,7 +46,7 @@ namespace JSG {
 
 			m_Window.OnUpdate();
 		}
-	}	
+	}
 
 	void Application::OnEvent(Event& e)
 	{

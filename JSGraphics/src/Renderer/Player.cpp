@@ -9,7 +9,7 @@ namespace JSG {
 		HandleRotation(ts);
 		UpdateForwardDirection();
 		DeterminePlayerState();
-		HandleMovement(ts);
+	//	UpdateJumpPhysics(ts);
 
 		switch (m_CurrentState)
 		{
@@ -22,6 +22,34 @@ namespace JSG {
 		case PlayerState::Run:
 			UpdateRunState(ts);
 			break;
+		}	
+
+		HandleMovement(ts);
+	}
+
+	void Player::Jump(float ts)
+	{
+		if (m_IsOnGround) // Only allow jumping if on the ground
+		{
+			m_VerticalVelocity = m_JumpForce; // Apply immediate upward velocity
+			m_IsOnGround = false;             // We are now airborne
+		}
+	}
+
+	void Player::UpdateJumpPhysics(float ts)
+	{
+		// Apply gravity (pulls velocity down over time)
+		m_VerticalVelocity -= m_Gravity * ts;
+
+		// Apply the vertical velocity to the position
+		// Assuming m_Position is a glm::vec3/vec2, you need to apply to the Y axis
+		m_Position.y += m_VerticalVelocity * ts;
+
+		// A very basic "ground collision" check (adjust for your specific game's floor level)
+		if (m_Position.y <= 0.0f) {
+			m_Position.y = 0.0f;        // Restrict position to ground level
+			m_IsOnGround = true;        // Reset the ground flag
+			m_VerticalVelocity = 0.0f;  // Stop vertical movement
 		}
 	}
 
@@ -76,6 +104,11 @@ namespace JSG {
 	void Player::UpdateRunState(float ts)
 	{
 		m_Speed = 8.0f;
+		UpdateColorPulse(ts);
+	}
+
+	void Player::UpdateColorPulse(float ts)
+	{
 		m_PulseTimer += 4.0f * ts;
 		const float colorIntensity = glm::abs(glm::cos(m_PulseTimer));
 		m_Color = { 0.0f, colorIntensity, 0.0f };
