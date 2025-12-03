@@ -7,8 +7,6 @@ namespace JSG {
 
 	void Enemy::OnUpdate(float ts, const Player& player)
 	{
-		UpdateForwardDirection();
-
 		const auto perceptionData = DetermineEnemyState(player);
 
 		switch (m_CurrentState)
@@ -46,7 +44,7 @@ namespace JSG {
 	{
 		const auto perceptionData = CalculatePerceptionData(player);
 		// Check if player is in Field Of View.
-		const bool isFOV = perceptionData.FOVAngleDegrees <= m_FOVAngle && perceptionData.DisplacementVectorLength <= m_FOVRange;
+		const bool isFOV = perceptionData.TargetAngleDegrees <= m_FOVAngle && perceptionData.TargetLength <= m_FOVRange;
 		// Angry Mode 
 		bool isAngry = m_ChaseTime > 3.0f;
 
@@ -77,24 +75,24 @@ namespace JSG {
 	{
 		const glm::vec3& playerPosition = player.GetPosition();
 		// Calculate the Displacement vector of Player Position and Enemy Position.
-		const glm::vec3 displacementVector = playerPosition - m_Position;
-		// Calculate the length of the DisplacementVectorLength vector.
-		const float displacementVectorLength = glm::length(displacementVector);
-		const glm::vec3 displacementVectorNormalized = glm::normalize(displacementVector);
-		// Calculate the angle of displacementVectorNormalized
-		const float displacementVectorNormalizedAngle = glm::degrees(glm::atan(displacementVectorNormalized.y, displacementVectorNormalized.x));
-		// Calculate the Dot Product of m_EnemyForwardDirection and DisplacementVectorNormalized vectors.
-		const float dotProduct = glm::dot(m_ForwardDirection, displacementVectorNormalized);
-		// Calculate the angle - in degrees - between NormalizedDisplacementVector and m_EnemyForwardDirection vectors. dotProduct / (glm::length(displacementVectorNormalized) * glm::length(m_ForwardDirection)) = dotProduct
-		const float FOVAngleDegrees = glm::degrees(glm::acos(glm::clamp(dotProduct, -1.0f, 1.0f)));
+		const glm::vec3 displacement = playerPosition - m_Position;
+		// Calculate the length of the displacement vector.
+		const float displacementLength = glm::length(displacement);
+		const glm::vec3 displacementDirection = glm::normalize(displacement);
+		// Calculate the angle of displacementDirection
+		const float displacementDirectionAngle = glm::degrees(glm::atan(displacementDirection.y, displacementDirection.x));
+		// Calculate the Dot Product of m_ForwardDirection and displacementDirection vectors.
+		const float dotProduct = glm::dot(m_ForwardDirection, displacementDirection);
+		// Calculate the angle - in degrees - between displacementDirection and m_ForwardDirection vectors. dotProduct / (glm::length(displacementVectorNormalized) * glm::length(m_ForwardDirection)) = dotProduct
+		const float angleDegrees = glm::degrees(glm::acos(glm::clamp(dotProduct, -1.0f, 1.0f)));
 
-		return { displacementVectorLength, FOVAngleDegrees, displacementVectorNormalizedAngle };
+		return { displacementLength, angleDegrees, displacementDirectionAngle };
 	}
 
 	void Enemy::UpdateChaseState(float ts, float playerHitBox, const PerceptionData& perceptionData)
 	{
 		// Checking if Enemy is touching player.
-		const bool isTouching = perceptionData.DisplacementVectorLength <= playerHitBox;
+		const bool isTouching = perceptionData.TargetLength <= playerHitBox;
 
 		if (!isTouching)
 		{
