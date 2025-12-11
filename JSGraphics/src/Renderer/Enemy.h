@@ -6,22 +6,15 @@ namespace JSG {
 
 	struct PerceptionData
 	{
-		float DisplacementVectorLength;
-		float FOVAngleDegrees;
-		float TargetDirectionAngle;
-
-		PerceptionData(float length, float FOVAngle, float targetDirectionAngle) :
-			DisplacementVectorLength(length),
-			FOVAngleDegrees(FOVAngle),
-			TargetDirectionAngle(targetDirectionAngle)
-		{}
+		float TargetDistance;         // The distance from the enemy to the player. displacementLength
+		float TargetDirectionAngle;   // Angle the TargetDirection has - in degrees. displacementDirectionAngle
+		float AngleToTargetDirection; // The angle to TargetDirection - in degrees. dotProductAngle
 	};
 
 	enum class EnemyState
 	{ 
 		Idle,
 		Chase,
-		Angry
 	};
 	
 	class Enemy
@@ -33,13 +26,15 @@ namespace JSG {
 		const glm::vec3& GetColor() const { return m_Color; }
 		float GetRotation() const { return m_Rotation; }
 		float GetSize() const { return m_Size; }
+		const PerceptionData& GetPerceptionData() const { return m_PerceptionData; }
+		bool IsTargetInFOV() const;
+		bool IsClose(const Player& player) const;
 	private:
+		void UpdatePerceptionData(const Player& player);
+		void DetermineEnemyState();
+		void UpdateChaseState(float ts, const Player& player);
+		void UpdateOrientation();
 		void UpdateForwardDirection();
-		const PerceptionData DetermineEnemyState(const Player& player);
-		const PerceptionData CalculatePerceptionData(const Player& player);
-		void UpdateAngryState(float ts, float playerHitBox, const PerceptionData& perceptionData);
-		void UpdateChaseState(float ts, float playerHitBox, const PerceptionData& perceptionData);
-		void UpdateOrientation(const PerceptionData& perceptionData);
 		void UpdateColorPulse(float ts);
 		void UpdateIdleState(float ts);
 	private:
@@ -49,14 +44,19 @@ namespace JSG {
 		glm::vec3 m_ForwardDirection = { 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_Color = { 1.0f, 0.0f, 0.0f };
 
+		struct FOVData
+		{
+			const float Range;
+			const float AngleDegrees;
+		};
+
+		FOVData m_FOVData = { 10.0f, 45.0f };
+
+		PerceptionData m_PerceptionData;
+
 		float m_Speed = 4.0f;
-		float m_FOVRange = 20.0f;
-		float m_FOVAngle = 45.0f;
 		float m_Rotation = -90.0f;
 		float m_Size = 1.0f;
 		float m_PulseTimer = 0.0f;
-
-		float m_ChaseTime = 0.0f;
-		float m_AngryChaseTime = 0.0f;
 	};
 }

@@ -698,7 +698,7 @@ namespace JSG {
 	{
 		m_ZoomLevel += e.GetYOffset() * 0.5f;
 		m_ZoomLevel = std::max(m_ZoomLevel, 0.50f);
-
+		
 		return false;
 	}
 

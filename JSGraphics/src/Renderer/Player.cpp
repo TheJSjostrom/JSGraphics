@@ -9,7 +9,7 @@ namespace JSG {
 		HandleRotation(ts);
 		UpdateForwardDirection();
 		DeterminePlayerState();
-	//	UpdateJumpPhysics(ts);
+		//UpdateJumpPhysics(ts);
 
 		switch (m_CurrentState)
 		{
@@ -67,8 +67,8 @@ namespace JSG {
 
 	void Player::UpdateForwardDirection()
 	{
-		m_ForwardDirection = { glm::cos(glm::radians(m_Rotation)), glm::sin(glm::radians(m_Rotation)), 0.0f };
-		m_ForwardDirection = glm::normalize(m_ForwardDirection);
+		const glm::vec3 forward = { glm::cos(glm::radians(m_Rotation)), glm::sin(glm::radians(m_Rotation)), 0.0f };
+		m_ForwardDirection = glm::normalize(forward);
 	}
 
 	void Player::DeterminePlayerState()
@@ -92,7 +92,7 @@ namespace JSG {
 
 	void Player::UpdateIdleState(float ts)
 	{
-		m_Color = { 0.0f, 1.0f, 0.0f };
+		m_Color = { 0.0f, 0.5f, 0.0f };
 	}
 
 	void Player::UpdateWalkState(float ts)
@@ -104,12 +104,14 @@ namespace JSG {
 	void Player::UpdateRunState(float ts)
 	{
 		m_Speed = 8.0f;
+		m_PulseSpeed = 4.0f;
+
 		UpdateColorPulse(ts);
 	}
 
 	void Player::UpdateColorPulse(float ts)
 	{
-		m_PulseTimer += 4.0f * ts;
+		m_PulseTimer += m_PulseSpeed * ts;
 		const float colorIntensity = glm::abs(glm::cos(m_PulseTimer));
 		m_Color = { 0.0f, colorIntensity, 0.0f };
 	}

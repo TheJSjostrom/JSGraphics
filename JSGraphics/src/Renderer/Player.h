@@ -16,13 +16,13 @@ namespace JSG {
 		void OnUpdate(float ts);
 
 		void Jump(float ts);
+
 		const glm::vec3& GetForwardDirection() const { return m_ForwardDirection; }
 		const glm::vec3& GetPosition() const { return m_Position; }
 		glm::vec3& GetColor() { return m_Color; }
-
 		float GetRotation() const { return m_Rotation; }
 		float GetSize() const { return m_Size; }
-		float GetHitBox() const { return m_HitBox; }
+		float GetHitbox() const { return m_HitBox; }
 	private:
 		void UpdateJumpPhysics(float ts);
 		void HandleRotation(float ts);
@@ -46,6 +46,7 @@ namespace JSG {
 		float m_Rotation = 90.0f;
 		float m_HitBox = 1.25f;
 		float m_PulseTimer = 0.0f;
+		float m_PulseSpeed = 0.0f;
 
 		float m_JumpForce = 7.0f;           // How high the initial velocity is
 		float m_Gravity = 15.0f;            // How fast the player is pulled down

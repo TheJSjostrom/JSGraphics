@@ -7,7 +7,8 @@ namespace JSG {
 
 	void Enemy::OnUpdate(float ts, const Player& player)
 	{
-		const auto perceptionData = DetermineEnemyState(player);
+		UpdatePerceptionData(player);
+		DetermineEnemyState();
 
 		switch (m_CurrentState)
 		{
@@ -15,63 +16,13 @@ namespace JSG {
 			UpdateIdleState(ts); 
 			break;
 		case EnemyState::Chase:
-			m_ChaseTime += ts;
-			m_Speed = 4.0f;
-			m_Color = { 0.8f, 0.8f, 0.8f };
-			UpdateChaseState(ts, player.GetHitBox(), perceptionData);
-			break;
-		case EnemyState::Angry:
-			UpdateAngryState(ts, player.GetHitBox(), perceptionData);
+			UpdateChaseState(ts, player);
 			UpdateColorPulse(ts);
-			UpdateChaseState(ts, player.GetHitBox(), perceptionData);
 			break;
 		}
 	}
 
-	void Enemy::UpdateAngryState(float ts, float playerHitBox, const PerceptionData& perceptionData)
-	{
-		m_AngryChaseTime += ts;
-		m_Speed = 10.0f;
-	}
-
-	void Enemy::UpdateForwardDirection()
-	{
-		m_ForwardDirection = { glm::cos(glm::radians(m_Rotation)), glm::sin(glm::radians(m_Rotation)), 0.0f };
-		m_ForwardDirection = glm::normalize(m_ForwardDirection);
-	}
-
-	const PerceptionData Enemy::DetermineEnemyState(const Player& player)
-	{
-		const auto perceptionData = CalculatePerceptionData(player);
-		// Check if player is in Field Of View.
-		const bool isFOV = perceptionData.TargetAngleDegrees <= m_FOVAngle && perceptionData.TargetLength <= m_FOVRange;
-		// Angry Mode 
-		bool isAngry = m_ChaseTime > 3.0f;
-
-		if (m_AngryChaseTime > 2.0f)
-		{
-			isAngry = false;
-			m_ChaseTime = 0.0f;
-			m_AngryChaseTime = 0.0f;
-		}
-
-		if (isFOV && isAngry)
-		{
-			m_CurrentState = EnemyState::Angry;
-		}
-		else if (isFOV)
-		{
-			m_CurrentState = EnemyState::Chase;
-		}
-		else
-		{
-			m_CurrentState = EnemyState::Idle;
-		}
-
-		return perceptionData;
-	}
-
-	const PerceptionData Enemy::CalculatePerceptionData(const Player& player)
+	void Enemy::UpdatePerceptionData(const Player& player)
 	{
 		const glm::vec3& playerPosition = player.GetPosition();
 		// Calculate the Displacement vector of Player Position and Enemy Position.
@@ -80,33 +31,64 @@ namespace JSG {
 		const float displacementLength = glm::length(displacement);
 		const glm::vec3 displacementDirection = glm::normalize(displacement);
 		// Calculate the angle of displacementDirection
-		const float displacementDirectionAngle = glm::degrees(glm::atan(displacementDirection.y, displacementDirection.x));
+		const float displacementDirectionAngleDegrees = glm::degrees(glm::atan(displacementDirection.y, displacementDirection.x));
 		// Calculate the Dot Product of m_ForwardDirection and displacementDirection vectors.
 		const float dotProduct = glm::dot(m_ForwardDirection, displacementDirection);
 		// Calculate the angle - in degrees - between displacementDirection and m_ForwardDirection vectors. dotProduct / (glm::length(displacementVectorNormalized) * glm::length(m_ForwardDirection)) = dotProduct
-		const float angleDegrees = glm::degrees(glm::acos(glm::clamp(dotProduct, -1.0f, 1.0f)));
+		const float dotProductAngleDegrees = glm::degrees(glm::acos(glm::clamp(dotProduct, -1.0f, 1.0f)));
 
-		return { displacementLength, angleDegrees, displacementDirectionAngle };
+		m_PerceptionData = { displacementLength, displacementDirectionAngleDegrees, dotProductAngleDegrees };
 	}
 
-	void Enemy::UpdateChaseState(float ts, float playerHitBox, const PerceptionData& perceptionData)
+	void Enemy::DetermineEnemyState()
 	{
-		// Checking if Enemy is touching player.
-		const bool isTouching = perceptionData.TargetLength <= playerHitBox;
-
-		if (!isTouching)
+		if (IsTargetInFOV())
 		{
-			UpdateOrientation(perceptionData);
+			m_CurrentState = EnemyState::Chase;
+		}
+		else
+		{
+			m_CurrentState = EnemyState::Idle;
+		}
+	}
+
+	bool Enemy::IsTargetInFOV() const
+	{
+		// Check if player is in Field of View.
+		const bool isFOV = m_PerceptionData.AngleToTargetDirection <= m_FOVData.AngleDegrees &&
+						   m_PerceptionData.TargetDistance <= m_FOVData.Range;
+		return isFOV;
+	}
+
+	void Enemy::UpdateChaseState(float ts, const Player& player)
+	{
+		if (!IsClose(player))
+		{
+			UpdateOrientation();
 
 			const glm::vec3 velocity = m_ForwardDirection * m_Speed * ts;
 			m_Position += velocity;
 		}
 	}
 
-	void Enemy::UpdateOrientation(const PerceptionData& perceptionData)
+	bool Enemy::IsClose(const Player& player) const
 	{
-		m_Rotation = perceptionData.TargetDirectionAngle;
+		// Checking if Enemy is close to the player.
+		const bool isClose = m_PerceptionData.TargetDistance <= player.GetHitbox();
+
+		return isClose;
+	}
+
+	void Enemy::UpdateOrientation()
+	{
+		m_Rotation = m_PerceptionData.TargetDirectionAngle;
 		UpdateForwardDirection();
+	}
+
+	void Enemy::UpdateForwardDirection()
+	{
+		const glm::vec3 forward = { glm::cos(glm::radians(m_Rotation)), glm::sin(glm::radians(m_Rotation)), 0.0f };
+		m_ForwardDirection = glm::normalize(forward);
 	}
 
 	void Enemy::UpdateColorPulse(float ts)
@@ -118,6 +100,6 @@ namespace JSG {
 
 	void Enemy::UpdateIdleState(float ts)
 	{
-		m_Color = { 0.8f, 0.8f, 0.8f };
+		m_Color = { 0.9f, 0.9f, 0.9f };
 	}
 }
