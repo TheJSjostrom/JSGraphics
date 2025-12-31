@@ -31,6 +31,11 @@ namespace JSG {
 	private:
 		void Init();
 		void Shutdown();
+
+		void InitGLFW() const;
+		void CreateGLFWWindow();
+		void InitGLAD() const;
+		void SetGLFWCallbacks() const;
 	private:
 		GLFWwindow* m_Window;
 		

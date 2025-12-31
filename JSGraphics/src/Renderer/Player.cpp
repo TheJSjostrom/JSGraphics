@@ -10,7 +10,8 @@ namespace JSG {
 		UpdateForwardDirection();
 		DeterminePlayerState();
 		//UpdateJumpPhysics(ts);
-
+		// r = v - 2 * dot(v, n) * n
+		
 		switch (m_CurrentState)
 		{
 		case PlayerState::Idle:
@@ -20,7 +21,7 @@ namespace JSG {
 			UpdateWalkState(ts);
 			break;
 		case PlayerState::Run:
-			UpdateRunState(ts);
+			UpdateRunState(ts); 
 			break;
 		}	
 
@@ -106,19 +107,43 @@ namespace JSG {
 		m_Speed = 8.0f;
 		m_PulseSpeed = 4.0f;
 
-		UpdateColorPulse(ts);
+		UpdateColorPulse(ts, 0);
 	}
 
-	void Player::UpdateColorPulse(float ts)
+	bool Player::IsOutOfBound() const
+	{
+		const bool isOutOfBound = m_Position.x >  25.0f || 
+								  m_Position.x < -25.0f ||
+								  m_Position.y >  26.0f || 
+							      m_Position.y < -25.0f;
+
+		return isOutOfBound;
+	}
+
+	void Player::UpdateColorPulse(float ts, uint32_t color)
 	{
 		m_PulseTimer += m_PulseSpeed * ts;
 		const float colorIntensity = glm::abs(glm::cos(m_PulseTimer));
-		m_Color = { 0.0f, colorIntensity, 0.0f };
+	
+		switch (color)
+		{
+		case 0:
+			m_Color = { 0.0f, colorIntensity, 0.0f };
+			break;
+		case 1:
+			m_Color = { colorIntensity, 0.0f, 0.0f };
+			break;
+		}
+	}
+
+	glm::vec3 Player::CalculateVelocity(float ts) const
+	{
+		return m_ForwardDirection * m_Speed * ts;
 	}
 
 	void Player::HandleMovement(float ts)
 	{
-		const glm::vec3 velocity = m_ForwardDirection * m_Speed * ts;
+		const glm::vec3 velocity = CalculateVelocity(ts);
 
 		if (Input::IsKeyPressed(GLFW_KEY_UP))
 		{

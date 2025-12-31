@@ -16,7 +16,7 @@ namespace JSG {
 			UpdateIdleState(ts); 
 			break;
 		case EnemyState::Chase:
-			UpdateChaseState(ts, player);
+			HandleChase(ts, player);
 			UpdateColorPulse(ts);
 			break;
 		}
@@ -54,35 +54,36 @@ namespace JSG {
 
 	bool Enemy::IsTargetInFOV() const
 	{
-		// Check if player is in Field of View.
 		const bool isFOV = m_PerceptionData.AngleToTargetDirection <= m_FOVData.AngleDegrees &&
 						   m_PerceptionData.TargetDistance <= m_FOVData.Range;
+
 		return isFOV;
 	}
 
-	void Enemy::UpdateChaseState(float ts, const Player& player)
+	void Enemy::HandleChase(float ts, const Player& player)
 	{
-		if (!IsClose(player))
+		if (!IsCloseToTarget(player))
 		{
 			UpdateOrientation();
-
-			const glm::vec3 velocity = m_ForwardDirection * m_Speed * ts;
-			m_Position += velocity;
+			UpdateMovement(ts);
 		}
 	}
 
-	bool Enemy::IsClose(const Player& player) const
+	bool Enemy::IsCloseToTarget(const Player& player) const
 	{
-		// Checking if Enemy is close to the player.
-		const bool isClose = m_PerceptionData.TargetDistance <= player.GetHitbox();
-
-		return isClose;
+		return m_PerceptionData.TargetDistance <= player.GetHitbox();
 	}
 
 	void Enemy::UpdateOrientation()
 	{
 		m_Rotation = m_PerceptionData.TargetDirectionAngle;
 		UpdateForwardDirection();
+	}
+
+	void Enemy::UpdateMovement(float ts)
+	{
+		const glm::vec3 velocity = m_ForwardDirection * m_Speed * ts;
+		m_Position += velocity;
 	}
 
 	void Enemy::UpdateForwardDirection()

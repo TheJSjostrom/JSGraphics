@@ -27,13 +27,15 @@ namespace JSG {
 		float GetRotation() const { return m_Rotation; }
 		float GetSize() const { return m_Size; }
 		const PerceptionData& GetPerceptionData() const { return m_PerceptionData; }
+		
 		bool IsTargetInFOV() const;
-		bool IsClose(const Player& player) const;
+		bool IsCloseToTarget(const Player& player) const;
 	private:
 		void UpdatePerceptionData(const Player& player);
 		void DetermineEnemyState();
-		void UpdateChaseState(float ts, const Player& player);
+		void HandleChase(float ts, const Player& player);
 		void UpdateOrientation();
+		void UpdateMovement(float ts);
 		void UpdateForwardDirection();
 		void UpdateColorPulse(float ts);
 		void UpdateIdleState(float ts);

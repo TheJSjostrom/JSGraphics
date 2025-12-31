@@ -1,4 +1,4 @@
-#include "Core/Sandbox2D.h"
+﻿#include "Core/Sandbox2D.h"
 #include "Core/Window.h"
 #include "Core/Application.h"
 #include "Core/Core.h"
@@ -80,7 +80,7 @@ namespace JSG {
 
 			void main()
 			{ 
-				float FragPosLength = sqrt(FragPos.x * FragPos.x + FragPos.y * FragPos.y);
+				float FragPosLength = sqrt(dot(FragPos,FragPos));
 				color = vec4(0.0, 0.0, 0.0, 0.0);
 
 				if (FragPosLength < 1.0)
@@ -186,7 +186,7 @@ namespace JSG {
 			{
 				gl_Position = u_Proj * u_View * u_Model * vec4(a_Position, 1.0);
 
-				FragPos = vec3(u_Model * vec4(a_Position, 1.0));
+				FragPos = vec4(a_Position, 1.0);
 				Normal = a_Normal;
 			}
 		)";
@@ -291,7 +291,7 @@ namespace JSG {
 
 			void main()
 			{ 
-				float FragPosLength = sqrt(FragPos.x * FragPos.x + FragPos.y * FragPos.y);
+				float FragPosLength = sqrt(dot(FragPos, FragPos));
 				color = vec4(u_Color, 0.0);
 
 				if (FragPosLength < 1.0)
@@ -356,10 +356,21 @@ namespace JSG {
 		///////////////////////////////
 
 		m_Player.OnUpdate(ts);
-		
-		if (m_Player.GetPosition().x >= 25.0f)
+
+		if (m_Player.IsOutOfBound())
 		{
-			m_Player.Jump(ts); // Calls the public command method once per press
+			m_Player.UpdateColorPulse(ts, 1);
+		}
+
+		////////////////////////////////
+		/////////// ENEMY /////////////
+		///////////////////////////////
+	
+		m_Enemy.OnUpdate(ts, m_Player);
+
+		if (m_Enemy.IsTargetInFOV())
+		{
+			std::cout << "Enemy Sees Target." << std::endl;
 		}
 
 		////////////////////////////////
@@ -371,17 +382,9 @@ namespace JSG {
 			m_Balls[i].OnUpdate(ts);
 		}
 
-		////////////////////////////////
-		/////////// ENEMY /////////////
-		///////////////////////////////
 
-		// Geometric interpretation - Algebraic interpretation
-		//         Scalar Projection
-		//        |              | cos(180) = -2/2
-		// ||A|| * ||B|| * cos(0) = A.x * B.x + A.y * B.y = A . B <- Dot Product
-		
-		m_Enemy.OnUpdate(ts, m_Player);
-
+		// Calculate
+		CalculateDotProductAngle();
 		////////////////////////////////
 		/////////// CAMERA /////////////
 		////////////////////////////////
@@ -480,13 +483,12 @@ namespace JSG {
 
 		// Render Ball
 		{
-
 			m_BallShader.Bind();
 			m_BallShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
 			m_BallShader.SetMat4("u_View", m_Camera.GetViewMatrix());
 
 
-			for (const auto& ball : m_Balls) 
+			for (const Ball& ball : m_Balls)
 			{
 				const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), ball.GetPosition())
 											* glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
@@ -742,6 +744,48 @@ namespace JSG {
 	//		m_Balls.emplace_back(m_Camera.GetPosition(), glm::vec3(1.0f, 0.0f, 0.0f), 1.0f);
 	
 	//	return false;
+	}
+
+	void Sandbox2D::CalculateDotProductAngle() const
+	{
+		const glm::vec3& playerPosition = m_Player.GetPosition();
+		const glm::vec3& enemyPosition = m_Enemy.GetPosition();
+
+		const glm::vec displacment = enemyPosition - playerPosition;
+		// Geometric interpretation - Algebraic interpretation
+		//         Scalar Projection
+		//        |              | cos(180) = -2/2
+		// A . B = A.x * B.x + A.y * B.y = ||A|| * ||B|| * cos(θ) <- Dot Product
+		const float dotProduct = glm::dot(playerPosition, enemyPosition);
+		
+	
+		/*
+		DISTANCE FORMULA
+		d = sqrt((x2-x1)^2 + (y2-y1)^2)
+
+		d^2 = (cos(A) - cos(B))^2 + (sin(A) - sin(B))^2
+		cos(A)^2 - 2cos(A)*cos(B) + cos(B)^2 + sin(A)^2 - 2sin(A)sin(B) + sin(B)^2
+		cos(A)^2 + sin(A)^2 + cos(B)^2 + sin(B)^2  - 2cos(A)*cos(B) - 2sin(A)sin(B)
+		1 + 1  - 2cos(A)*cos(B) - 2sin(A)sin(B)
+		2 - 2cos(A)*cos(B) - 2sin(A)sin(B)
+		
+		simplified:
+		d^2 = 2 - 2(cos(A)*cos(B) + sin(A)sin(B))
+
+		LAW OF COSINES
+		a^2 = b^2 + c^2 - 2bc*cos(theta)
+
+		a^2 = 1^2 + 1^2 - 2*1*1*cos(theta)
+		1 + 1 - 2*cos(theta)
+
+		simplified:
+		2 - 2cos(theta)
+
+
+		Result
+		2 - 2cos(theta) = 2 - 2(cos(A)*cos(B) + sin(A)sin(B))
+		cos(theta) = cos(A)cos(B) + sin(A)sin(B)
+		*/
 	}
 
 }

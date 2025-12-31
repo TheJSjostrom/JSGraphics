@@ -30,6 +30,8 @@ namespace JSG {
 	private:
 		bool OnMouseScrolled(const MouseScrolledEvent& e);
 		bool OnMouseButtonPressed(const MouseButtonPressedEvent& e);
+
+		void CalculateDotProductAngle() const;
 	private:
 		glm::vec3 m_BackgroundColor = { 0.009f, 0.018f, 0.039f };
 
