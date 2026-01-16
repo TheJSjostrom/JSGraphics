@@ -14,6 +14,7 @@ IncludeDir["GLFW"] = "JSGraphics/vendor/GLFW/include"
 IncludeDir["Glad"] = "JSGraphics/vendor/Glad/include"
 IncludeDir["ImGui"] = "JSGraphics/vendor/imgui"
 IncludeDir["glm"] = "JSGraphics/vendor/glm"
+IncludeDir["stb_image"] = "JSGraphics/vendor/stb_image"
 
 include "JSGraphics/vendor/GLFW"
 include "JSGraphics/vendor/Glad"
@@ -30,7 +31,9 @@ project "JSGraphics"
 	files
 	{
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp"
+		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/vendor/stb_image/**.h",
+		"%{prj.name}/vendor/stb_image/**.cpp"
 	}
 
 	includedirs
@@ -39,7 +42,8 @@ project "JSGraphics"
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.ImGui}",
-		"%{IncludeDir.glm}"
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.stb_image}"
 	}
 		
 	links

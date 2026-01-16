@@ -6,7 +6,7 @@ namespace JSG {
 
 	struct PerceptionData
 	{
-		float TargetDistance;         // The distance from the enemy to the player. displacementLength
+		float DistanceToTarget;       // The distance from the enemy to the player. displacementLength
 		float TargetDirectionAngle;   // Angle the TargetDirection has - in degrees. displacementDirectionAngle
 		float AngleToTargetDirection; // The angle to TargetDirection - in degrees. dotProductAngle
 	};

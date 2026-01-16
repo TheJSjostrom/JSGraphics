@@ -55,7 +55,7 @@ namespace JSG {
 	bool Enemy::IsTargetInFOV() const
 	{
 		const bool isFOV = m_PerceptionData.AngleToTargetDirection <= m_FOVData.AngleDegrees &&
-						   m_PerceptionData.TargetDistance <= m_FOVData.Range;
+						   m_PerceptionData.DistanceToTarget <= m_FOVData.Range;
 
 		return isFOV;
 	}
@@ -71,7 +71,7 @@ namespace JSG {
 
 	bool Enemy::IsCloseToTarget(const Player& player) const
 	{
-		return m_PerceptionData.TargetDistance <= player.GetHitbox();
+		return m_PerceptionData.DistanceToTarget <= player.GetHitbox();
 	}
 
 	void Enemy::UpdateOrientation()

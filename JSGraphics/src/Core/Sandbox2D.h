@@ -4,6 +4,7 @@
 
 #include "Core/Sandbox.h"
 
+#include "Renderer/Texture2D.h"
 #include "Renderer/Shader.h"
 #include "Renderer/Buffer.h"
 #include "Renderer/Camera.h"
@@ -13,6 +14,8 @@
 #include "Renderer/Player.h"
 
 #include "glm/glm.hpp"
+
+#include <vector>
 
 namespace JSG {
 
@@ -35,7 +38,19 @@ namespace JSG {
 	private:
 		glm::vec3 m_BackgroundColor = { 0.009f, 0.018f, 0.039f };
 
+		Texture2D m_Texture = std::string("wooden.JPG");
+
 		// Shader Data
+		uint32_t m_TextureQuadVertexArray;
+		VertexBuffer m_TextureQuadVertexBuffer;
+		IndexBuffer m_TextureQuadIndexBuffer;
+		Shader m_TextureQuadShader;
+		
+		uint32_t m_TriangleVertexArray;
+		VertexBuffer m_TriangleVertexBuffer;
+		IndexBuffer m_TriangleIndexBuffer;
+		Shader m_TriangleShader;
+
 		uint32_t m_BallVertexArray;
 		VertexBuffer m_BallVertexBuffer;
 		IndexBuffer m_BallIndexBuffer;

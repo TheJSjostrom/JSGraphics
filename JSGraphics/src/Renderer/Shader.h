@@ -14,12 +14,14 @@ namespace JSG {
 		void Bind() const;
 		void UnBind() const;
 
+		void SetInt(const std::string& name, uint32_t value);
 		void SetFloat(const std::string& name, float value);
 		void SetFloat3(const std::string& name, const glm::vec3& value);
 		void SetMat4(const std::string& name, const glm::mat4& value);
 	private:
 		void Shutdown();
 
+		void UploadUniformInt(const std::string& name, uint32_t value);
 		void UploadUniformFloat(const std::string& name, float value);
 		void UploadUniformFloat3(const std::string& name, const glm::vec3& value);
 		void UploadUniformMat4(const std::string& name, const glm::mat4& matrix);

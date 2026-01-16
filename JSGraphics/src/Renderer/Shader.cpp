@@ -131,6 +131,11 @@ namespace JSG {
 		glUseProgram(0);
 	}
 
+	void Shader::SetInt(const std::string& name, uint32_t value)
+	{
+		UploadUniformInt(name, value);
+	}
+
 	void Shader::SetFloat(const std::string& name, float value)
 	{
 		UploadUniformFloat(name, value);
@@ -144,6 +149,12 @@ namespace JSG {
 	void Shader::SetMat4(const std::string& name, const glm::mat4& value)
 	{
 		UploadUniformMat4(name, value);
+	}
+
+	void Shader::UploadUniformInt(const std::string& name, uint32_t value)
+	{
+		uint32_t location = glGetUniformLocation(m_ShaderID, name.c_str());
+		glUniform1f(location, value);
 	}
 
 	void Shader::UploadUniformFloat(const std::string& name, float value)

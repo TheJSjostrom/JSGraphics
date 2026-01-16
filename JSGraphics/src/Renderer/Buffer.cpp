@@ -12,8 +12,7 @@ namespace JSG {
 	void VertexBuffer::Init(uint32_t size, float* vertices)
 	{
 		glCreateBuffers(1, &m_VertexBufferID);
-		glBindBuffer(GL_ARRAY_BUFFER, m_VertexBufferID);
-		glBufferData(GL_ARRAY_BUFFER, size, reinterpret_cast<void*>(vertices), GL_STATIC_DRAW);
+		glNamedBufferData(m_VertexBufferID, size, reinterpret_cast<void*>(vertices), GL_STATIC_DRAW);
 	}
 
 	void VertexBuffer::Shutdown()
@@ -40,8 +39,7 @@ namespace JSG {
 	void IndexBuffer::Init(uint32_t size, uint32_t* indices)
 	{
 		glCreateBuffers(1, &m_IndexBufferID);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBufferID);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, reinterpret_cast<void*>(indices), GL_STATIC_DRAW);
+		glNamedBufferData(m_IndexBufferID, size, reinterpret_cast<void*>(indices), GL_STATIC_DRAW);
 	}
 
 	void IndexBuffer::Shutdown()
