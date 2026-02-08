@@ -21,11 +21,14 @@ namespace JSG {
 	{
 		m_Balls.reserve(20);
 
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		//glEnable(GL_BLEND);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
+
+		glDepthMask(GL_TRUE);
+
 		//////////////////
 		// Texture Quad //
 		//////////////////
@@ -67,7 +70,7 @@ namespace JSG {
 
 			void main()
 			{
-				gl_Position = u_Proj * u_View * u_Model * vec4(a_Position.x, a_Position.y, 0.0f, 1.0f);
+				gl_Position = u_Proj * u_View * u_Model * vec4(a_Position, 1.0f);
 				TextureCoord = a_TextureCoord;
 			}
 		)";
@@ -92,6 +95,7 @@ namespace JSG {
 
 		m_Texture.Bind();
 		m_TextureQuadShader.SetInt("u_Texture", 0);
+
 		//////////////
 		// Triangle //
 		//////////////
@@ -131,7 +135,7 @@ namespace JSG {
 
 			void main()
 			{
-				gl_Position = u_Proj * u_View * u_Model * vec4(a_Position.x, a_Position.y, 0.0f, 1.0f);
+				gl_Position = u_Proj * u_View * u_Model * vec4(a_Position, 1.0);
 				Color = a_Color;
 			}
 		)";
@@ -285,21 +289,23 @@ namespace JSG {
 		glCreateVertexArrays(1, &m_QuadVertexArray);
 		glBindVertexArray(m_QuadVertexArray);
 
-		float QuadVertices[4 * 6] = {
-     	//  Position          Normal
-			-0.5f,-0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 0
-			 0.5f,-0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 1
-			 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 2
-			-0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f  // Vertex Index 3
+		float QuadVertices[4 * 8] = {
+     	//  Position            Normal             Texture Coord
+			-0.5f,-0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f, // Vertex Index 0
+			 0.5f,-0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f, // Vertex Index 1
+			 0.5f, 0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f, // Vertex Index 2
+			-0.5f, 0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 1.0f  // Vertex Index 3
 		};
-
+ 
 		m_QuadVertexBuffer.Init(sizeof(QuadVertices), QuadVertices);
 		m_QuadVertexBuffer.Bind();
 
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(0 * sizeof(float)));
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(0 * sizeof(float)));
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
 
 		uint32_t QuadIndices[6] = { 0, 1, 2, 2, 3, 0 };
 		m_QuadIndexBuffer.Init(sizeof(QuadIndices), QuadIndices);
@@ -310,6 +316,7 @@ namespace JSG {
 			
 			layout(location = 0) in vec3 a_Position;
 			layout(location = 1) in vec3 a_Normal;
+			layout(location = 2) in vec2 a_TextureCoord;
 
 			uniform mat4 u_Proj;
 			uniform mat4 u_View;
@@ -317,13 +324,15 @@ namespace JSG {
 			
 			out vec3 FragPos;
 			out vec3 Normal;
-			
+			out vec2 textureCoord;
+
 			void main()
 			{
 				gl_Position = u_Proj * u_View * u_Model * vec4(a_Position, 1.0);
 
 				FragPos = vec3(u_Model * vec4(a_Position, 1.0));
 				Normal = a_Normal;
+				textureCoord = a_TextureCoord;
 			}
 		)";
 
@@ -341,6 +350,9 @@ namespace JSG {
 
 			in vec3 FragPos;
 			in vec3 Normal;
+			in vec2 textureCoord;
+
+			uniform sampler2D u_Texture;
 
 			void main()
 			{ 
@@ -359,15 +371,15 @@ namespace JSG {
 				float angle = degrees(acos(diff / (length(viewDir) * length(reflectDir))));
 		
 				vec3 specular = specularStrength * spec * u_LightColor; 
-
-				vec3 result = (diffuse + ambient + specular) * u_ObjectColor;
-			
+				 
+				vec3 result = (diffuse + ambient + specular) * texture(u_Texture, textureCoord).rgb;
+			    
 				color = vec4(result, 1.0);
 			}
 		)";
 
 		m_QuadShader.Init(QuadVertexSrc, QuadFragSrc);
-		m_QuadShader.Bind();
+		m_QuadShader.SetInt("u_Texture", 0);
 
 		// Circle
 		glCreateVertexArrays(1, &m_CircleVertexArray);
@@ -521,20 +533,21 @@ namespace JSG {
 
 		// Calculate
 		CalculateDotProductAngle();
+
 		////////////////////////////////
 		/////////// CAMERA /////////////
 		////////////////////////////////
 
-		glm::vec3 CameraBackDirection = { 0.0f, 0.0f, 1.0f };
-		glm::vec3 CameraRightDirection = glm::normalize(glm::cross(m_CameraUpDirection, CameraBackDirection));
-	
-		m_CameraUpDirection = { glm::cos(glm::radians(90.0f + m_CameraRotation)), glm::sin(glm::radians(90.0f + m_CameraRotation)), 0.0f };
-		m_CameraUpDirection = glm::normalize(m_CameraUpDirection);
+		const glm::vec3 cameraBackDirection = { 0.0f, 0.0f, 1.0f };
+		const float cameraUpDirectionRotation = glm::radians(90.0f + m_CameraRotation);
 
-		const glm::vec3 cameraUpVelocity = m_CameraUpDirection * m_CameraSpeed * ts;
-		const glm::vec3 cameraRightVelocity = CameraRightDirection * m_CameraSpeed * ts;
+		const glm::vec3 cameraUpDirection = { glm::cos(cameraUpDirectionRotation), glm::sin(cameraUpDirectionRotation), 0.0f };
+		const glm::vec3 cameraRightDirection = glm::normalize(glm::cross(cameraUpDirection, cameraBackDirection));
+		
+		const glm::vec3 cameraUpVelocity = cameraUpDirection * m_CameraSpeed * ts;
+		const glm::vec3 cameraRightVelocity = cameraRightDirection * m_CameraSpeed * ts;
 
-		if (Input::IsKeyPressed(GLFW_KEY_W)) 
+		if (Input::IsKeyPressed(GLFW_KEY_W))
 		{
 			m_CameraPosition += cameraUpVelocity;
 		}
@@ -599,58 +612,34 @@ namespace JSG {
 
 		// Entities |
 		//			v
-		//u_Proj* u_View* u_Model* vec4(a_Position, 1.0f);
+		//u_Proj * u_View * u_Model * vec4(a_Position, 1.0f);
 	
-		{
-			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 1.0f, 0.0f, 0.0f })
-				* glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0, 0, 1))
-				* glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
-
-			m_TextureQuadShader.Bind();
-			m_TextureQuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
-			m_TextureQuadShader.SetMat4("u_View", m_Camera.GetViewMatrix());
-			m_TextureQuadShader.SetMat4("u_Model", ModelMatrix);
-
-			m_Texture.Bind();
-			glBindVertexArray(m_TextureQuadVertexArray);
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
-		}
-
-		{
-			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.5f, 0.0f })
-										* glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 0, 1))
-										* glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
-
-			m_TriangleShader.Bind();
-			m_TriangleShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
-			m_TriangleShader.SetMat4("u_View", m_Camera.GetViewMatrix());
-			m_TriangleShader.SetMat4("u_Model", ModelMatrix);
-			glm::vec4 clipSpace = m_Camera.GetProjectionMatrix() * m_Camera.GetViewMatrix() * ModelMatrix * glm::vec4(0.0f, 0.5f, 0.0f, 1.0f);
-
-			glBindVertexArray(m_TriangleVertexArray);
-			glDrawElements(GL_LINE_LOOP, 3, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
-		}
-		 
-		{
-			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, 0.0f })
-				* glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 0, 1))
-				* glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
-
-			m_TriangleShader.Bind();
-			m_TriangleShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
-			m_TriangleShader.SetMat4("u_View", m_Camera.GetViewMatrix());
-			m_TriangleShader.SetMat4("u_Model", ModelMatrix);
-
-			glBindVertexArray(m_TriangleVertexArray);
-			glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
-		}
-
-
 		// Render Quad Floor.
 		{
-			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), m_FloorPosition)
-										* glm::rotate(glm::mat4(1.0f), glm::radians(m_FloorRotation), glm::vec3(0, 0, 1))
-										* glm::scale(glm::mat4(1.0f), glm::vec3(m_FloorSize));
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, -0.2f })
+				                        * glm::rotate(glm::mat4(1.0f), glm::radians(m_FloorRotation), glm::vec3(0, 0, 1))
+				                        * glm::scale(glm::mat4(1.0f), glm::vec3(m_FloorSize));
+
+			const float zoomLevel = 1.0f;
+			const float aspectRatio = 2.0f;
+			const glm::vec4 clipSpace = glm::ortho(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel, -1.0f, 1.0f) * glm::vec4(0.5f, 0.5f, 0.0f, 1.0f);
+			std::cout << clipSpace.x << std::endl;
+			// 1/4 * 0.125 * 100
+			// 1/2 * 0.25 * 50
+
+
+			// X
+			// 2/4 = 1/2
+			// 0.25f * 2 * 0.5 = 0.25;
+			// 0.25*2 * 100
+			// Xv = (clipSpace.x + 1) * width/2;
+
+			// Y
+
+
+
+			float windowSpaceX = (0.25) * (200 / 2);
+			float windowSpaceY = (0.5) * (100 / 2);
 
 			m_QuadShader.Bind();
 			m_QuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
@@ -662,10 +651,40 @@ namespace JSG {
 			m_QuadShader.SetFloat3("u_ObjectColor", m_FloorColor);
 			m_QuadShader.SetFloat3("viewPos", m_Camera.GetPosition());
 
+			m_Texture.Bind();
 			glBindVertexArray(m_QuadVertexArray);
-			//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
 		}
 
+		{
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, 0.3f })
+										* glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 0, 1))
+										* glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
+			
+			m_TriangleShader.Bind();
+			m_TriangleShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
+			m_TriangleShader.SetMat4("u_View", m_Camera.GetViewMatrix());
+			m_TriangleShader.SetMat4("u_Model", ModelMatrix);
+
+			glBindVertexArray(m_TriangleVertexArray);
+			glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+		}
+
+		{
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, -0.5f })
+										* glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0, 0, 1))
+										* glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
+
+			m_TextureQuadShader.Bind();
+			m_TextureQuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
+			m_TextureQuadShader.SetMat4("u_View", m_Camera.GetViewMatrix());
+			m_TextureQuadShader.SetMat4("u_Model", ModelMatrix);
+
+			m_Texture.Bind();
+			glBindVertexArray(m_TextureQuadVertexArray);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+		}
+		 
 		// Render Ball
 		{
 			m_BallShader.Bind();
@@ -682,7 +701,7 @@ namespace JSG {
 				m_BallShader.SetMat4("u_Model", ModelMatrix);
 
 				glBindVertexArray(m_BallVertexArray);
-				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+			//	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
 			}
 		}
 

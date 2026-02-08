@@ -13,6 +13,7 @@ namespace JSG {
 		void Bind(uint32_t slot = 0) const;
 	private:
 		std::string m_Path;
+
 		uint32_t m_Width;
 		uint32_t m_Height;
 		uint32_t m_ColorChannels;

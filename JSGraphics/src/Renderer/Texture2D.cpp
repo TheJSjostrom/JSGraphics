@@ -9,7 +9,7 @@ namespace JSG {
 		m_Path(path)
 	{
 		int32_t width, height, colorChannels;
-		unsigned char* textureData = stbi_load(path.c_str(), &width, &height, &colorChannels, 0);
+		uint8_t* textureData = stbi_load(path.c_str(), &width, &height, &colorChannels, 0);
 		
 		if (!textureData)
 		{

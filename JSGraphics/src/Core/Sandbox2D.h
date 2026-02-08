@@ -38,7 +38,7 @@ namespace JSG {
 	private:
 		glm::vec3 m_BackgroundColor = { 0.009f, 0.018f, 0.039f };
 
-		Texture2D m_Texture = std::string("wooden.JPG");
+		Texture2D m_Texture = std::string("assets/texture/wooden.jpg");
 
 		// Shader Data
 		uint32_t m_TextureQuadVertexArray;
@@ -73,10 +73,9 @@ namespace JSG {
 
 		// Camera
 		Camera m_Camera;
-		float m_ZoomLevel = 10.0f;
+		float m_ZoomLevel = 1.0f;
 		float m_AspectRatio = 0.0f;
 
-		glm::vec3 m_CameraUpDirection = { 0.0f, 0.0f, 0.0f };
 		glm::vec3 m_CameraPosition = { 0.0f, 0.0f, 0.0f };
 		float m_CameraRotation = 0.0f;
 		float m_CameraSpeed = 10.0f;
@@ -103,7 +102,6 @@ namespace JSG {
 		float m_LightCubeAngle = 90.0f;
 
 		// Floor
-		glm::vec3 m_FloorPosition = { 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_FloorColor = { 0.941f, 1.000f, 0.000f };
 
 		float m_FloorSize = 50.0f;
