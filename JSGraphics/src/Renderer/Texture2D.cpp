@@ -3,49 +3,37 @@
 #include <print>
 #include "glad/glad.h"
 #include "glm/glm.hpp"
+
 namespace JSG {
 
 	Texture2D::Texture2D(const std::string& path) :
-		m_Path(path)
+		m_Path(path),
+		m_TextureID(0)
 	{
-		int32_t width, height, colorChannels;
-		uint8_t* textureData = stbi_load(path.c_str(), &width, &height, &colorChannels, 0);
-		
-		if (!textureData)
+		ImageData imageData = LoadImage(path);
+
+		if (!imageData.Data)
 		{
 			std::println("Error. Failed to load image!");
+			return;
 		}
 
-		m_Width = width;
-		m_Height = height;
-		m_ColorChannels = colorChannels;
+		m_Width = imageData.Width;
+		m_Height = imageData.Height;
+		m_ColorChannels = imageData.Channels;
 
-		uint32_t internalFormat = 0, textureDataFormat = 0;
-		switch (colorChannels)
-		{
-		case 3:
-			internalFormat = GL_RGB8;
-			textureDataFormat = GL_RGB;
-			break;
-		case 4:
-			internalFormat = GL_RGBA8;
-			textureDataFormat = GL_RGBA;
-			break;
-		default:
-			std::println("Error. Unsupported channel count {}", colorChannels);
-			break;
-		}
+		ImageFormat imageFormat = DetermineFormats(imageData.Channels);
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &m_TextureID);
-		glTextureStorage2D(m_TextureID, 1, internalFormat, width, height);
+		glTextureStorage2D(m_TextureID, 1, imageFormat.InternalFormat, imageData.Width, imageData.Height);
 		
 		glTextureParameteri(m_TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTextureParameteri(m_TextureID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		glTextureSubImage2D(m_TextureID, 0, 0, 0, m_Width, m_Height, textureDataFormat, GL_UNSIGNED_BYTE, textureData);
+		glTextureSubImage2D(m_TextureID, 0, 0, 0, m_Width, m_Height, imageFormat.DataFormat, GL_UNSIGNED_BYTE, imageData.Data);
 
-		stbi_image_free(textureData);
+		stbi_image_free(imageData.Data);
 	}
 
 	Texture2D::~Texture2D()
@@ -56,5 +44,34 @@ namespace JSG {
 	void Texture2D::Bind(uint32_t slot) const
 	{
 		glBindTextureUnit(slot, m_TextureID);
+	}
+
+	ImageData Texture2D::LoadImage(const std::string& path) const
+	{
+		int32_t width, height, channels;
+		uint8_t* textureData = stbi_load(path.c_str(), &width, &height, &channels, 0);
+
+		return { textureData, width, height, channels };
+	}
+
+	ImageFormat Texture2D::DetermineFormats(int32_t channels) const
+	{
+		uint32_t internalFormat = 0, textureDataFormat = 0;
+		switch (channels)
+		{
+		case 3:
+			internalFormat = GL_RGB8;
+			textureDataFormat = GL_RGB;
+			break;
+		case 4:
+			internalFormat = GL_RGBA8;
+			textureDataFormat = GL_RGBA;
+			break;
+		default:
+			std::println("Error. Unsupported channel count {}", channels);
+			break;
+		}
+
+		return { internalFormat, textureDataFormat };
 	}
 }

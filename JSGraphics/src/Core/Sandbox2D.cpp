@@ -636,8 +636,6 @@ namespace JSG {
 
 			// Y
 
-
-
 			float windowSpaceX = (0.25) * (200 / 2);
 			float windowSpaceY = (0.5) * (100 / 2);
 
