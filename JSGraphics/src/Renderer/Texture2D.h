@@ -9,6 +9,8 @@ namespace JSG {
 		int32_t Width = 0;
 		int32_t Height = 0;
 		int32_t Channels = 0;
+
+		bool IsLoaded() const { return Data != nullptr; }
 	};
 
 	struct ImageFormat
@@ -28,11 +30,15 @@ namespace JSG {
 		ImageData LoadImage(const std::string& path) const;
 		ImageFormat DetermineFormats(int32_t channels) const;
 	private:
-		std::string m_Path;
+		struct TextureSpecification
+		{
+			uint32_t Width = 0;
+			uint32_t Height = 0;
+			uint32_t ColorChannels = 0;
+		};
 
-		uint32_t m_Width;
-		uint32_t m_Height;
-		uint32_t m_ColorChannels;
+		TextureSpecification m_Spec;
+		std::string m_Path;
 		uint32_t m_TextureID;
 	};
 

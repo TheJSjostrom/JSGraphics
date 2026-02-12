@@ -10,19 +10,23 @@ namespace JSG {
 		m_Path(path),
 		m_TextureID(0)
 	{
-		ImageData imageData = LoadImage(path);
-
-		if (!imageData.Data)
+		const ImageData imageData = LoadImage(path);
+		if (!imageData.IsLoaded())
 		{
 			std::println("Error. Failed to load image!");
 			return;
 		}
 
-		m_Width = imageData.Width;
-		m_Height = imageData.Height;
-		m_ColorChannels = imageData.Channels;
+		const ImageFormat imageFormat = DetermineFormats(imageData.Channels);
+		if (imageFormat.InternalFormat == 0)
+		{
+			stbi_image_free(imageData.Data);
+			return;
+		}
 
-		ImageFormat imageFormat = DetermineFormats(imageData.Channels);
+		m_Spec.Width = imageData.Width;
+		m_Spec.Height = imageData.Height;
+		m_Spec.ColorChannels = imageData.Channels;
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &m_TextureID);
 		glTextureStorage2D(m_TextureID, 1, imageFormat.InternalFormat, imageData.Width, imageData.Height);
@@ -31,7 +35,7 @@ namespace JSG {
 		glTextureParameteri(m_TextureID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		glTextureSubImage2D(m_TextureID, 0, 0, 0, m_Width, m_Height, imageFormat.DataFormat, GL_UNSIGNED_BYTE, imageData.Data);
+		glTextureSubImage2D(m_TextureID, 0, 0, 0, m_Spec.Width, m_Spec.Height, imageFormat.DataFormat, GL_UNSIGNED_BYTE, imageData.Data);
 
 		stbi_image_free(imageData.Data);
 	}

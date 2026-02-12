@@ -616,7 +616,7 @@ namespace JSG {
 	
 		// Render Quad Floor.
 		{
-			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, -0.2f })
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, -0.8f })
 				                        * glm::rotate(glm::mat4(1.0f), glm::radians(m_FloorRotation), glm::vec3(0, 0, 1))
 				                        * glm::scale(glm::mat4(1.0f), glm::vec3(m_FloorSize));
 
@@ -624,8 +624,9 @@ namespace JSG {
 			const float aspectRatio = 2.0f;
 			const glm::vec4 clipSpace = glm::ortho(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel, -1.0f, 1.0f) * glm::vec4(0.5f, 0.5f, 0.0f, 1.0f);
 			std::cout << clipSpace.x << std::endl;
-			// 1/4 * 0.125 * 100
-			// 1/2 * 0.25 * 50
+			// 1/2*1/2
+			// 1/4 * 200
+			// 1/2 * 100
 
 
 			// X
@@ -655,7 +656,7 @@ namespace JSG {
 		}
 
 		{
-			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, 0.3f })
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, -0.49f })
 										* glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 0, 1))
 										* glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
 			
@@ -706,7 +707,7 @@ namespace JSG {
 		// Render quad player
 		{
 			glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), m_Player.GetPosition())
-								  * glm::rotate(glm::mat4(1.0f), glm::radians(m_Player.GetRotation()), glm::vec3(0, 0, 1))
+								  * glm::rotate(glm::mat4(1.0f), glm::radians(m_Player.GetRotation()), glm::vec3(0.0f, 0.0f, 1.0f))
 								  * glm::scale(glm::mat4(1.0f), glm::vec3(m_Player.GetSize()));
 
 			if (Input::IsKeyPressed(GLFW_KEY_M))
