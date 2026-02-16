@@ -17,6 +17,8 @@ namespace JSG {
 	{
 		uint32_t InternalFormat = 0;
 		uint32_t DataFormat = 0;
+
+		bool IsSupported() const { return InternalFormat != 0 && DataFormat != 0; }
 	};
 
 	class Texture2D 
@@ -26,9 +28,6 @@ namespace JSG {
 		~Texture2D();
 
 		void Bind(uint32_t slot = 0) const;
-	private:
-		ImageData LoadImage(const std::string& path) const;
-		ImageFormat DetermineFormats(int32_t channels) const;
 	private:
 		struct TextureSpecification
 		{

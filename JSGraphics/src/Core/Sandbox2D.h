@@ -103,7 +103,7 @@ namespace JSG {
 
 		// Floor
 		glm::vec3 m_FloorColor = { 0.941f, 1.000f, 0.000f };
-
+ 
 		float m_FloorSize = 50.0f;
 		float m_FloorRotation = 0.0f;
 	};

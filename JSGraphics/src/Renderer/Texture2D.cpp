@@ -6,20 +6,53 @@
 
 namespace JSG {
 
+	namespace Utils {
+
+		static ImageData LoadImage(const std::string& path)
+		{
+			int32_t width, height, channels;
+			uint8_t* textureData = stbi_load(path.c_str(), &width, &height, &channels, 0);
+
+			return { textureData, width, height, channels };
+		}
+
+		static ImageFormat DetermineFormats(int32_t channels)
+		{
+			uint32_t internalFormat = 0, textureDataFormat = 0;
+			switch (channels)
+			{
+			case 3:
+				internalFormat = GL_RGB8;
+				textureDataFormat = GL_RGB;
+				break;
+			case 4:
+				internalFormat = GL_RGBA8;
+				textureDataFormat = GL_RGBA;
+				break;
+			}
+
+			return { internalFormat, textureDataFormat };
+		}
+
+	}
+
 	Texture2D::Texture2D(const std::string& path) :
 		m_Path(path),
 		m_TextureID(0)
 	{
-		const ImageData imageData = LoadImage(path);
+		stbi_set_flip_vertically_on_load(1);
+
+		const ImageData imageData = Utils::LoadImage(path);
 		if (!imageData.IsLoaded())
 		{
 			std::println("Error. Failed to load image!");
 			return;
 		}
 
-		const ImageFormat imageFormat = DetermineFormats(imageData.Channels);
-		if (imageFormat.InternalFormat == 0)
+		const ImageFormat imageFormat = Utils::DetermineFormats(imageData.Channels);
+		if (!imageFormat.IsSupported())
 		{
+			std::println("Format is not supported");
 			stbi_image_free(imageData.Data);
 			return;
 		}
@@ -50,32 +83,4 @@ namespace JSG {
 		glBindTextureUnit(slot, m_TextureID);
 	}
 
-	ImageData Texture2D::LoadImage(const std::string& path) const
-	{
-		int32_t width, height, channels;
-		uint8_t* textureData = stbi_load(path.c_str(), &width, &height, &channels, 0);
-
-		return { textureData, width, height, channels };
-	}
-
-	ImageFormat Texture2D::DetermineFormats(int32_t channels) const
-	{
-		uint32_t internalFormat = 0, textureDataFormat = 0;
-		switch (channels)
-		{
-		case 3:
-			internalFormat = GL_RGB8;
-			textureDataFormat = GL_RGB;
-			break;
-		case 4:
-			internalFormat = GL_RGBA8;
-			textureDataFormat = GL_RGBA;
-			break;
-		default:
-			std::println("Error. Unsupported channel count {}", channels);
-			break;
-		}
-
-		return { internalFormat, textureDataFormat };
-	}
 }

@@ -613,7 +613,7 @@ namespace JSG {
 		// Entities |
 		//			v
 		//u_Proj * u_View * u_Model * vec4(a_Position, 1.0f);
-	
+
 		// Render Quad Floor.
 		{
 			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, -0.8f })
@@ -621,12 +621,12 @@ namespace JSG {
 				                        * glm::scale(glm::mat4(1.0f), glm::vec3(m_FloorSize));
 
 			const float zoomLevel = 1.0f;
-			const float aspectRatio = 2.0f;
+			const float aspectRatio = 5.0f;
 			const glm::vec4 clipSpace = glm::ortho(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel, -1.0f, 1.0f) * glm::vec4(0.5f, 0.5f, 0.0f, 1.0f);
 			std::cout << clipSpace.x << std::endl;
 			// 1/2*1/2
-			// 1/4 * 200
-			// 1/2 * 100
+			// 1/4 * 200 -> 100 -> 50
+			// 1/2 * 100 -> 100 -> 50
 
 
 			// X

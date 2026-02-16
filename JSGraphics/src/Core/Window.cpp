@@ -28,9 +28,31 @@ namespace JSG {
 
 	void Window::Init()
 	{
-		InitGLFW();
-		CreateGLFWWindow();
-		InitGLAD();
+		glfwSetErrorCallback(GLFWErrorCallback);
+
+		const bool isGLFWInit = static_cast<bool>(glfwInit());
+		if (!isGLFWInit)
+		{
+			throw std::runtime_error("GLFW Initialization failed");
+		}
+
+		std::println("Creating Window: {} ({}, {})", m_Data.Title.c_str(), m_Data.Width, m_Data.Height);
+
+		m_Window = glfwCreateWindow(m_Data.Width, m_Data.Height, m_Data.Title.c_str(), nullptr, nullptr);
+		if (!m_Window)
+		{
+			glfwTerminate();
+			throw std::runtime_error("Window creation failed");
+		}
+
+		glfwMakeContextCurrent(m_Window);
+
+		const bool isGLADInit = static_cast<bool>(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress));
+		if (!isGLADInit)
+		{
+			throw std::runtime_error("GLAD Initialization failed");
+		}
+
 		SetGLFWCallbacks();
 
 		glfwSetWindowUserPointer(m_Window, &m_Data);
@@ -61,35 +83,6 @@ namespace JSG {
 		}
 
 		m_Data.VSync = enabled;
-	}
-
-	void Window::InitGLFW() const
-	{
-		const bool isGLFWInit = static_cast<bool>(glfwInit());
-
-		if (!isGLFWInit)
-		{
-			std::println("Couldn't initialize glfw: {}", isGLFWInit);
-			glfwSetErrorCallback(GLFWErrorCallback);
-		}
-	}
-
-	void Window::CreateGLFWWindow()
-	{
-		std::println("Creating Window: {} ({}, {})", m_Data.Title.c_str(), m_Data.Width, m_Data.Height);
-
-		m_Window = glfwCreateWindow(m_Data.Width, m_Data.Height, m_Data.Title.c_str(), nullptr, nullptr);
-		glfwMakeContextCurrent(m_Window);
-	}
-
-	void Window::InitGLAD() const
-	{
-		const bool isGLADInit = static_cast<bool>(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress));
-
-		if (!isGLADInit)
-		{
-			std::println("Failed to initialize Glad; {}", isGLADInit);
-		}
 	}
 
 	void Window::SetGLFWCallbacks() const
