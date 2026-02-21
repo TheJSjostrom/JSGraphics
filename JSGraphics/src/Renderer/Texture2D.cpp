@@ -12,10 +12,10 @@ namespace JSG {
 		{
 			int32_t width, height, channels;
 			uint8_t* textureData = stbi_load(path.c_str(), &width, &height, &channels, 0);
-
+			
 			return { textureData, width, height, channels };
 		}
-
+		
 		static ImageFormat DetermineFormats(int32_t channels)
 		{
 			uint32_t internalFormat = 0, textureDataFormat = 0;
@@ -52,11 +52,11 @@ namespace JSG {
 		const ImageFormat imageFormat = Utils::DetermineFormats(imageData.Channels);
 		if (!imageFormat.IsSupported())
 		{
-			std::println("Format is not supported");
+			std::println("Format is not supported.");
 			stbi_image_free(imageData.Data);
 			return;
 		}
-
+	
 		m_Spec.Width = imageData.Width;
 		m_Spec.Height = imageData.Height;
 		m_Spec.ColorChannels = imageData.Channels;

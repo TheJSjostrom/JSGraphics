@@ -21,7 +21,7 @@ namespace JSG {
 		bool IsSupported() const { return InternalFormat != 0 && DataFormat != 0; }
 	};
 
-	class Texture2D 
+	class Texture2D
 	{
 	public:
 		Texture2D(const std::string& path);

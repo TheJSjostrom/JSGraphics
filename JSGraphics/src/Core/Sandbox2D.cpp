@@ -460,6 +460,14 @@ namespace JSG {
 		Application& app = *Application::Get();
 		m_AspectRatio = app.GetWindow().GetWidth() / static_cast<float>(app.GetWindow().GetHeight());
 
+
+		glm::vec3 v = { glm::cos(glm::radians(90.0f)), glm::sin(glm::radians(90.0f)), 0.0f };
+		glm::vec3 v2 = { glm::cos(glm::radians(0.0f)), glm::sin(glm::radians(0.0f)), 0.0f };
+
+		glm::vec3 vr = v - v2;
+		glm::vec3 vrn = -1.0f * vr;
+		glm::vec3 v2r = v2 - v;
+		int x = 2;
 		// Player
 		//glm::vec3 PlayerUpDirection = { 0.0f, 0.0f, 1.0f };
 		//glm::vec3 PlayerLeftDirection = glm::normalize(glm::cross(PlayerUpDirection, m_PlayerForwardDirection));
