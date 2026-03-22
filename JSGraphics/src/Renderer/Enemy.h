@@ -42,7 +42,7 @@ namespace JSG {
 	private:
 		EnemyState m_CurrentState = EnemyState::Idle;
 
-		glm::vec3 m_Position = { -5.0f, 0.0f, 0.0f };
+		glm::vec3 m_Position = { -5.0f, 0.0f, 1.0f };
 		glm::vec3 m_ForwardDirection = { 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_Color = { 1.0f, 0.0f, 0.0f };
 

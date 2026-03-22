@@ -16,9 +16,34 @@
 
 namespace JSG {
 
-	Sandbox2D::Sandbox2D() : 
+	Sandbox2D::Sandbox2D() :
 		m_Camera(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel)
 	{
+		const float zoomLevel = 1.0f;
+		const float width = 1000.0f;
+		const float height = 500.0f;
+		const float aspectRatio = width / height;
+
+		glm::mat4 orthoProj = glm::ortho(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel, -1.0f, 1.0f);
+		glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), { 0.25f, 0.0f, 0.0f });
+
+		// The first vertex position
+		const glm::vec3 position = { 0.5f, 0.5f, 0.0f };
+		const glm::vec4 GLposition = orthoProj * modelMatrix * glm::vec4(position, 1.0f);
+		// position in Window Space.
+		const float x = (GLposition.x + 1) * (width / 2.0f);
+		const float y = (GLposition.y + 1) * (height / 2.0f);
+
+		// The second vertex position
+		const glm::vec3 position2 = { -0.5f, 0.5f, 0.0f };
+		const glm::vec4 GLposition2 = orthoProj * modelMatrix * glm::vec4(position2, 1.0f);
+		// position in Window Space.
+		const float x2 = (GLposition2.x + 1) * (width / 2.0f);
+		const float y2 = (GLposition2.y + 1) * (height / 2.0f);
+		float c = GLposition.x - GLposition2.x;
+		float z = x - x2;
+
+
 		m_Balls.reserve(20);
 
 		//glEnable(GL_BLEND);
@@ -95,6 +120,7 @@ namespace JSG {
 
 		m_Texture.Bind();
 		m_TextureQuadShader.SetInt("u_Texture", 0);
+		m_Texture.Load("assets/texture/wooden.jpg");
 
 		//////////////
 		// Triangle //
@@ -239,11 +265,11 @@ namespace JSG {
 		glBindVertexArray(m_LightCubeVertexArray);
 
 		float LightCubeVertices[4 * 6] = {
-		//  Position          Normal
-			-0.5f,-0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 0
-			 0.5f,-0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 1
-			 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Vertex Index 2
-			-0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f  // Vertex Index 3
+		//  Position
+			-0.5f,-0.5f, 0.0f,  // Vertex Index 0
+			 0.5f,-0.5f, 0.0f,  // Vertex Index 1
+			 0.5f, 0.5f, 0.0f,  // Vertex Index 2
+			-0.5f, 0.5f, 0.0f   // Vertex Index 3
 		};
 
 		m_LightCubeVertexBuffer.Init(sizeof(LightCubeVertices), LightCubeVertices);
@@ -331,7 +357,9 @@ namespace JSG {
 				gl_Position = u_Proj * u_View * u_Model * vec4(a_Position, 1.0);
 
 				FragPos = vec3(u_Model * vec4(a_Position, 1.0));
-				Normal = a_Normal;
+				Normal = mat3(u_Model) * a_Normal;
+				Normal = normalize(Normal);
+
 				textureCoord = a_TextureCoord;
 			}
 		)";
@@ -358,19 +386,16 @@ namespace JSG {
 			{ 
 				float ambientStrength = 0.001f;
 				vec3 ambient = ambientStrength * u_LightColor;
-
-				vec3 playerDir = normalize(u_LightPos - FragPos);
-				float diff = max(dot(Normal, playerDir), 0.0f);
- 
+				
+				vec3 lightDir = normalize(u_LightPos - FragPos);
+				float diff = max(dot(Normal, lightDir), 0.0f);
 				vec3 diffuse = diff * u_LightColor;
 
 				float specularStrength = 0.5;
 				vec3 viewDir = normalize(u_LightPos - FragPos);
-				vec3 reflectDir = reflect(-u_LigthDirection, Normal);  
+				vec3 reflectDir = reflect(-u_LigthDirection, Normal);
 				float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-				float angle = degrees(acos(diff / (length(viewDir) * length(reflectDir))));
-		
-				vec3 specular = specularStrength * spec * u_LightColor; 
+				vec3 specular = specularStrength * spec * u_LightColor;
 				 
 				vec3 result = (diffuse + ambient + specular) * texture(u_Texture, textureCoord).rgb;
 			    
@@ -386,11 +411,11 @@ namespace JSG {
 		glBindVertexArray(m_CircleVertexArray);
 
 		float CircleVertices[4 * 6] = {
-		//  Position          Local Position
-			-0.5f,-0.5f, 0.0f,-1.0f,-1.0f, 0.0f, // Vertex Index 0
-			 0.5f,-0.5f, 0.0f, 1.0f,-1.0f, 0.0f, // Vertex Index 1
-			 0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, // Vertex Index 2
-			-0.5f, 0.5f, 0.0f,-1.0f, 1.0f, 0.0f  // Vertex Index 3
+		//  Position             Local Position
+			-0.5f,-0.5f, 0.0f,  -1.0f,-1.0f, 0.0f, // Vertex Index 0
+			 0.5f,-0.5f, 0.0f,   1.0f,-1.0f, 0.0f, // Vertex Index 1
+			 0.5f, 0.5f, 0.0f,   1.0f, 1.0f, 0.0f, // Vertex Index 2
+			-0.5f, 0.5f, 0.0f,  -1.0f, 1.0f, 0.0f  // Vertex Index 3
 		};
 
 		m_CircleVertexBuffer.Init(sizeof(CircleVertices), CircleVertices);
@@ -460,19 +485,15 @@ namespace JSG {
 		Application& app = *Application::Get();
 		m_AspectRatio = app.GetWindow().GetWidth() / static_cast<float>(app.GetWindow().GetHeight());
 
-
-		glm::vec3 v = { glm::cos(glm::radians(90.0f)), glm::sin(glm::radians(90.0f)), 0.0f };
-		glm::vec3 v2 = { glm::cos(glm::radians(0.0f)), glm::sin(glm::radians(0.0f)), 0.0f };
-
-		glm::vec3 vr = v - v2;
-		glm::vec3 vrn = -1.0f * vr;
-		glm::vec3 v2r = v2 - v;
-		int x = 2;
+		int x = 256; // [00000000] [00000001] [00000000] [00000000] 
+		char* y = (char*)&x + 0;
+		char t = *y;
+		int p = *(int*)y;
+		
 		// Player
 		//glm::vec3 PlayerUpDirection = { 0.0f, 0.0f, 1.0f };
 		//glm::vec3 PlayerLeftDirection = glm::normalize(glm::cross(PlayerUpDirection, m_PlayerForwardDirection));
 		// copy elision
-		
 		///////////////////////////////////
 		///////// LIGHT CUBE //////////////
 		///////////////////////////////////
@@ -537,7 +558,6 @@ namespace JSG {
 		{
 			m_Balls[i].OnUpdate(ts);
 		}
-
 
 		// Calculate
 		CalculateDotProductAngle();
@@ -624,38 +644,19 @@ namespace JSG {
 
 		// Render Quad Floor.
 		{
-			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, -0.8f })
-				                        * glm::rotate(glm::mat4(1.0f), glm::radians(m_FloorRotation), glm::vec3(0, 0, 1))
+			const glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, 0.0f })
+				                        * glm::rotate(glm::mat4(1.0f), glm::radians(m_FloorRotation), glm::vec3(0.0f, 0.0f, 1.0f))
 				                        * glm::scale(glm::mat4(1.0f), glm::vec3(m_FloorSize));
-
-			const float zoomLevel = 1.0f;
-			const float aspectRatio = 5.0f;
-			const glm::vec4 clipSpace = glm::ortho(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel, -1.0f, 1.0f) * glm::vec4(0.5f, 0.5f, 0.0f, 1.0f);
-			std::cout << clipSpace.x << std::endl;
-			// 1/2*1/2
-			// 1/4 * 200 -> 100 -> 50
-			// 1/2 * 100 -> 100 -> 50
-
-
-			// X
-			// 2/4 = 1/2
-			// 0.25f * 2 * 0.5 = 0.25;
-			// 0.25*2 * 100
-			// Xv = (clipSpace.x + 1) * width/2;
-
-			// Y
-
-			float windowSpaceX = (0.25) * (200 / 2);
-			float windowSpaceY = (0.5) * (100 / 2);
 
 			m_QuadShader.Bind();
 			m_QuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
 			m_QuadShader.SetMat4("u_View", m_Camera.GetViewMatrix());
-			m_QuadShader.SetMat4("u_Model", ModelMatrix);
+			m_QuadShader.SetMat4("u_Model", modelMatrix);
 			m_QuadShader.SetFloat3("u_LightPos", m_LightCubePosition);
 			m_QuadShader.SetFloat3("u_LigthDirection", m_LigthCubeDirection);
 			m_QuadShader.SetFloat3("u_LightColor", m_LightCubeColor);
 			m_QuadShader.SetFloat3("u_ObjectColor", m_FloorColor);
+			m_QuadShader.SetFloat3("u_CameraPos", m_Camera.GetPosition());
 			m_QuadShader.SetFloat3("viewPos", m_Camera.GetPosition());
 
 			m_Texture.Bind();
@@ -664,7 +665,7 @@ namespace JSG {
 		}
 
 		{
-			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, -0.49f })
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, -0.5f })
 										* glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 0, 1))
 										* glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
 			
@@ -676,10 +677,10 @@ namespace JSG {
 			glBindVertexArray(m_TriangleVertexArray);
 			glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
 		}
-
+		
 		{
-			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, -0.5f })
-										* glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0, 0, 1))
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { 0.0f, 0.0f, 0.2f })
+										* glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f))
 										* glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
 
 			m_TextureQuadShader.Bind();
@@ -740,7 +741,7 @@ namespace JSG {
 		// Render quad Enemy
 		{
 			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), m_Enemy.GetPosition())
-										* glm::rotate(glm::mat4(1.0f), glm::radians(m_Enemy.GetRotation()), glm::vec3(0, 0, 1))
+										* glm::rotate(glm::mat4(1.0f), glm::radians(m_Enemy.GetRotation()), glm::vec3(0.0f, 0.0f, 1.0f))
 										* glm::scale(glm::mat4(1.0f), glm::vec3(m_Enemy.GetSize()));
 
 			m_QuadShader.Bind();
@@ -759,15 +760,15 @@ namespace JSG {
 
 		// Render Light Cube
 		{
-			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { m_LightCubePosition.x, m_LightCubePosition.y, 0.0 })
-										* glm::rotate(glm::mat4(1.0f), glm::radians(m_LightCubeAngle), glm::vec3(0, 0, 1))
+			const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), { m_LightCubePosition.x, m_LightCubePosition.y, 1.0f })
+										* glm::rotate(glm::mat4(1.0f), glm::radians(m_LightCubeAngle), glm::vec3(0.0f, 0.0f, 1.0f))
 								    	* glm::scale(glm::mat4(1.0f), glm::vec3(0.25f));
 
-			m_CircleShader.Bind();
-			m_CircleShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
-			m_CircleShader.SetMat4("u_View", m_Camera.GetViewMatrix());
-			m_CircleShader.SetMat4("u_Model", ModelMatrix);
-			m_CircleShader.SetFloat3("u_Color", glm::vec3(1.0f, 1.0f, 1.0f));
+			m_LightCubeShader.Bind();
+			m_LightCubeShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
+			m_LightCubeShader.SetMat4("u_View", m_Camera.GetViewMatrix());
+			m_LightCubeShader.SetMat4("u_Model", ModelMatrix);
+			m_LightCubeShader.SetFloat3("u_Color", m_LightCubeColor);
 
 			glBindVertexArray(m_CircleVertexArray);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
@@ -897,7 +898,13 @@ namespace JSG {
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Player Settings");
 		ImGui::ColorEdit4("Player Color", reinterpret_cast<float*>(&m_Player.GetColor()));
 		ImGui::Text(" ");
+
+		// Light Cube Settings
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Light Cube Settings");
+		ImGui::ColorEdit4("Ligth Cube Color", reinterpret_cast<float*>(&m_LightCubeColor));
+		ImGui::Text(" ");
 		ImGui::End();
+		
 	}
 
 	void Sandbox2D::OnEvent(Event& e)

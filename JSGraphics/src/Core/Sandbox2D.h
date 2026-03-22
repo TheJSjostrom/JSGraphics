@@ -38,7 +38,7 @@ namespace JSG {
 	private:
 		glm::vec3 m_BackgroundColor = { 0.009f, 0.018f, 0.039f };
 
-		Texture2D m_Texture = std::string("assets/texture/wooden.jpg");
+		Texture2D m_Texture;
 
 		// Shader Data
 		uint32_t m_TextureQuadVertexArray;

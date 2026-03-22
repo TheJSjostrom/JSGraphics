@@ -88,9 +88,9 @@ namespace JSG {
 		glLinkProgram(m_ShaderID);
 
 		// Note the different functions here: glGetProgram* instead of glGetShader*.
-		GLint isLinked = 0;
-		glGetProgramiv(m_ShaderID, GL_LINK_STATUS, (int*)&isLinked);
-		if (isLinked == GL_FALSE)
+		GLint isProgramLinked = 0;
+		glGetProgramiv(m_ShaderID, GL_LINK_STATUS, &isProgramLinked);
+		if (isProgramLinked == GL_FALSE)
 		{
 			GLint maxLength = 0;
 			glGetProgramiv(m_ShaderID, GL_INFO_LOG_LENGTH, &maxLength);

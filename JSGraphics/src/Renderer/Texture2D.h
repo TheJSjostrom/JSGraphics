@@ -24,11 +24,16 @@ namespace JSG {
 	class Texture2D
 	{
 	public:
+		Texture2D() = default;
 		Texture2D(const std::string& path);
+
 		~Texture2D();
 
 		void Bind(uint32_t slot = 0) const;
+		bool Load(const std::string& path);
 	private:
+		uint32_t m_TextureID = 0;
+
 		struct TextureSpecification
 		{
 			uint32_t Width = 0;
@@ -38,7 +43,6 @@ namespace JSG {
 
 		TextureSpecification m_Spec;
 		std::string m_Path;
-		uint32_t m_TextureID;
 	};
 
 }

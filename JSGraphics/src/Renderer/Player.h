@@ -42,7 +42,7 @@ namespace JSG {
 	private:
 		PlayerState m_CurrentState = PlayerState::Idle;
 
-		glm::vec3 m_Position = { 11.0f, 2.0f, 0.0f };
+		glm::vec3 m_Position = { 11.0f, 2.0f, 1.0f };
 		glm::vec3 m_Color = { 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_ForwardDirection = { 0.0f, 0.0f, 0.0f };
 

@@ -10,6 +10,8 @@ namespace JSG {
 
 		static ImageData LoadImage(const std::string& path)
 		{
+			stbi_set_flip_vertically_on_load(1);
+
 			int32_t width, height, channels;
 			uint8_t* textureData = stbi_load(path.c_str(), &width, &height, &channels, 0);
 			
@@ -37,40 +39,9 @@ namespace JSG {
 	}
 
 	Texture2D::Texture2D(const std::string& path) :
-		m_Path(path),
-		m_TextureID(0)
+		m_Path(path)
 	{
-		stbi_set_flip_vertically_on_load(1);
-
-		const ImageData imageData = Utils::LoadImage(path);
-		if (!imageData.IsLoaded())
-		{
-			std::println("Error. Failed to load image!");
-			return;
-		}
-
-		const ImageFormat imageFormat = Utils::DetermineFormats(imageData.Channels);
-		if (!imageFormat.IsSupported())
-		{
-			std::println("Format is not supported.");
-			stbi_image_free(imageData.Data);
-			return;
-		}
-	
-		m_Spec.Width = imageData.Width;
-		m_Spec.Height = imageData.Height;
-		m_Spec.ColorChannels = imageData.Channels;
-
-		glCreateTextures(GL_TEXTURE_2D, 1, &m_TextureID);
-		glTextureStorage2D(m_TextureID, 1, imageFormat.InternalFormat, imageData.Width, imageData.Height);
-		
-		glTextureParameteri(m_TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTextureParameteri(m_TextureID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		glTextureSubImage2D(m_TextureID, 0, 0, 0, m_Spec.Width, m_Spec.Height, imageFormat.DataFormat, GL_UNSIGNED_BYTE, imageData.Data);
-
-		stbi_image_free(imageData.Data);
+		Load(path);
 	}
 
 	Texture2D::~Texture2D()
@@ -83,4 +54,40 @@ namespace JSG {
 		glBindTextureUnit(slot, m_TextureID);
 	}
 
+	bool Texture2D::Load(const std::string& path)
+	{
+		const ImageData imageData = Utils::LoadImage(path);
+		if (!imageData.IsLoaded())
+		{
+			std::println("Error. Failed to load image at path {}.", path);
+
+			return false;
+		}
+
+		const ImageFormat imageFormat = Utils::DetermineFormats(imageData.Channels);
+		if (!imageFormat.IsSupported())
+		{
+			std::println("Format is not supported.");
+			stbi_image_free(imageData.Data);
+
+			return false;
+		}
+
+		m_Spec.Width = imageData.Width;
+		m_Spec.Height = imageData.Height;
+		m_Spec.ColorChannels = imageData.Channels;
+
+		glCreateTextures(GL_TEXTURE_2D, 1, &m_TextureID);
+		glTextureStorage2D(m_TextureID, 1, imageFormat.InternalFormat, imageData.Width, imageData.Height);
+
+		glTextureParameteri(m_TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTextureParameteri(m_TextureID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glTextureSubImage2D(m_TextureID, 0, 0, 0, m_Spec.Width, m_Spec.Height, imageFormat.DataFormat, GL_UNSIGNED_BYTE, imageData.Data);
+
+		stbi_image_free(imageData.Data);
+
+		return true;
+	}
 }
