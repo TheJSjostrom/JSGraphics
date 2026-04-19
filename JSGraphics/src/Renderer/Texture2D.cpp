@@ -1,8 +1,11 @@
 #include "Texture2D.h"
+
 #include "stb_image.h"
-#include <print>
 #include "glad/glad.h"
 #include "glm/glm.hpp"
+
+#include <print>
+#include <iostream>
 
 namespace JSG {
 
@@ -11,10 +14,10 @@ namespace JSG {
 		static ImageData LoadImage(const std::string& path)
 		{
 			stbi_set_flip_vertically_on_load(1);
-
+			
 			int32_t width, height, channels;
 			uint8_t* textureData = stbi_load(path.c_str(), &width, &height, &channels, 0);
-			
+
 			return { textureData, width, height, channels };
 		}
 		
@@ -60,7 +63,7 @@ namespace JSG {
 		if (!imageData.IsLoaded())
 		{
 			std::println("Error. Failed to load image at path {}.", path);
-
+			
 			return false;
 		}
 
@@ -72,14 +75,14 @@ namespace JSG {
 
 			return false;
 		}
-
+		
 		m_Spec.Width = imageData.Width;
 		m_Spec.Height = imageData.Height;
 		m_Spec.ColorChannels = imageData.Channels;
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &m_TextureID);
 		glTextureStorage2D(m_TextureID, 1, imageFormat.InternalFormat, imageData.Width, imageData.Height);
-
+		
 		glTextureParameteri(m_TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTextureParameteri(m_TextureID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 

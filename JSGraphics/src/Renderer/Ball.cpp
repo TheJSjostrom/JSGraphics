@@ -11,7 +11,7 @@ namespace JSG {
 
 	void Ball::OnUpdate(float ts)
 	{
-		// 1. Apply gravitya
+		// 1. Apply gravity
 		m_Velocity.y += m_Gravity * ts;
 
 		// 2. Update position

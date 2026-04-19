@@ -5,9 +5,23 @@
 
 namespace JSG {
 
+	namespace Utils
+	{
+		float CalculatedotAngle(const glm::vec3& v1, const glm::vec3& v2)
+		{
+			return glm::degrees(glm::acos(glm::clamp(glm::dot(v1, v2), -1.0f, 1.0f)));
+		}
+
+		Displacement CalculateDisplacement(const glm::vec3& v1, const glm::vec3& v2)
+		{
+			const glm::vec3 displacment = v1 - v2;
+			return { glm::normalize(displacment), glm::length(displacment), glm::degrees(glm::atan(displacment.y, displacment.x)) };
+		}
+	}
+
 	void Enemy::OnUpdate(float ts, const Player& player)
 	{
-		UpdatePerceptionData(player);
+		UpdatePerception(player);
 		DetermineEnemyState();
 
 		switch (m_CurrentState)
@@ -22,24 +36,18 @@ namespace JSG {
 		}
 	}
 
-	void Enemy::UpdatePerceptionData(const Player& player)
+	void Enemy::UpdatePerception(const Player& player)
 	{
 		const glm::vec3& playerPosition = player.GetPosition();
-		// Calculate the Displacement vector of Player Position and Enemy Position.
-		const glm::vec3 displacement = playerPosition - m_Position;
-		// Calculate the length of the displacement vector.
-		const float displacementLength = glm::length(displacement);
-		const glm::vec3 displacementDirection = glm::normalize(displacement);
-		// Calculate the angle of displacementDirection
-		const float displacementDirectionAngleDegrees = glm::degrees(glm::atan(displacementDirection.y, displacementDirection.x));
-		// Calculate the Dot Product of m_ForwardDirection and displacementDirection vectors.
-		const float dotProduct = glm::dot(m_ForwardDirection, displacementDirection);
-		// Calculate the angle - in degrees - between displacementDirection and m_ForwardDirection vectors. dotProduct / (glm::length(displacementVectorNormalized) * glm::length(m_ForwardDirection)) = dotProduct
-		const float dotProductAngleDegrees = glm::degrees(glm::acos(glm::clamp(dotProduct, -1.0f, 1.0f)));
+		const Displacement displacement = Utils::CalculateDisplacement(playerPosition, m_Position);
 
-		m_PerceptionData = { displacementLength, displacementDirectionAngleDegrees, dotProductAngleDegrees };
-	}
+		const float dotAngle = Utils::CalculatedotAngle(m_ForwardDirection, displacement.Direction);
 
+		m_Perception.DistanceToTarget = displacement.Length;
+		m_Perception.TargetWorldAngle = displacement.Angle;
+		m_Perception.AngleToTarget = dotAngle;
+	};
+	
 	void Enemy::DetermineEnemyState()
 	{
 		if (IsTargetInFOV())
@@ -54,10 +62,8 @@ namespace JSG {
 
 	bool Enemy::IsTargetInFOV() const
 	{
-		const bool isFOV = m_PerceptionData.AngleToTargetDirection <= m_FOVData.AngleDegrees &&
-						   m_PerceptionData.DistanceToTarget <= m_FOVData.Range;
-
-		return isFOV;
+		return m_Perception.AngleToTarget <= m_Vision.Angle &&
+			   m_Perception.DistanceToTarget <= m_Vision.Range;
 	}
 
 	void Enemy::HandleChase(float ts, const Player& player)
@@ -71,12 +77,12 @@ namespace JSG {
 
 	bool Enemy::IsCloseToTarget(const Player& player) const
 	{
-		return m_PerceptionData.DistanceToTarget <= player.GetHitbox();
+		return m_Perception.DistanceToTarget <= player.GetHitbox();
 	}
 
 	void Enemy::UpdateOrientation()
 	{
-		m_Rotation = m_PerceptionData.TargetDirectionAngle;
+		m_Rotation = m_Perception.TargetWorldAngle;
 		UpdateForwardDirection();
 	}
 

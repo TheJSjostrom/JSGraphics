@@ -19,7 +19,7 @@ namespace JSG {
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
 		ImGui::StyleColorsDark();
-
+		SetDarkThemeColors();
 		// Setup Platform/Renderer backends
 		Application& app = *Application::Get();
 		ImGui_ImplGlfw_InitForOpenGL(app.GetWindow().GetNativeWindow(), true);

@@ -4,11 +4,18 @@
 
 namespace JSG {
 
-	struct PerceptionData
+	struct Perception
 	{
-		float DistanceToTarget;       // The distance from the enemy to the player. displacementLength
-		float TargetDirectionAngle;   // Angle the TargetDirection has - in degrees. displacementDirectionAngle
-		float AngleToTargetDirection; // The angle to TargetDirection - in degrees. dotProductAngle
+		float DistanceToTarget = 0.0f;
+		float AngleToTarget = 0.0f;
+		float TargetWorldAngle = 0.0f;
+	};
+
+	struct Displacement
+	{
+		glm::vec3 Direction;
+		float Length;
+		float Angle;
 	};
 
 	enum class EnemyState
@@ -16,7 +23,7 @@ namespace JSG {
 		Idle,
 		Chase,
 	};
-	
+
 	class Enemy
 	{
 	public:
@@ -26,12 +33,12 @@ namespace JSG {
 		const glm::vec3& GetColor() const { return m_Color; }
 		float GetRotation() const { return m_Rotation; }
 		float GetSize() const { return m_Size; }
-		const PerceptionData& GetPerceptionData() const { return m_PerceptionData; }
+		const Perception& GetPerception() const { return m_Perception; }
 		
 		bool IsTargetInFOV() const;
 		bool IsCloseToTarget(const Player& player) const;
 	private:
-		void UpdatePerceptionData(const Player& player);
+		void UpdatePerception(const Player& player);
 		void DetermineEnemyState();
 		void HandleChase(float ts, const Player& player);
 		void UpdateOrientation();
@@ -46,15 +53,15 @@ namespace JSG {
 		glm::vec3 m_ForwardDirection = { 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_Color = { 1.0f, 0.0f, 0.0f };
 
-		struct FOVData
+		struct FieldOfView
 		{
-			const float Range;
-			const float AngleDegrees;
+			float Range;
+			float Angle;
 		};
 
-		FOVData m_FOVData = { 10.0f, 45.0f };
+		FieldOfView m_Vision = { 10.0f, 45.0f };
 
-		PerceptionData m_PerceptionData;
+		Perception m_Perception;
 
 		float m_Speed = 4.0f;
 		float m_Rotation = -90.0f;

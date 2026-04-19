@@ -19,11 +19,21 @@ namespace JSG {
 	Sandbox2D::Sandbox2D() :
 		m_Camera(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel)
 	{
+		float num = 7.75f;
+		
+
+		std::cout << *(int*)&num << std::endl;
+		std::cout << *(reinterpret_cast<int*>(&num)) << std::endl;
+		int num2 = 1089994752;
+		std::cout << std::bit_cast<float>(num2) << std::endl;
+ 
+		std::cout << *(reinterpret_cast<float*>(&num2)) << std::endl;
+
 		const float zoomLevel = 1.0f;
 		const float width = 1000.0f;
 		const float height = 500.0f;
 		const float aspectRatio = width / height;
-
+		
 		glm::mat4 orthoProj = glm::ortho(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel, -1.0f, 1.0f);
 		glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), { 0.25f, 0.0f, 0.0f });
 
@@ -118,10 +128,10 @@ namespace JSG {
 		m_TextureQuadShader.Init(TextureQuadVertexSrc, TextureQuadFragSrc);
 		m_TextureQuadShader.Bind();
 
-		m_Texture.Bind();
 		m_TextureQuadShader.SetInt("u_Texture", 0);
+		m_Texture.Bind();
 		m_Texture.Load("assets/texture/wooden.jpg");
-
+		
 		//////////////
 		// Triangle //
 		//////////////
@@ -405,7 +415,7 @@ namespace JSG {
 
 		m_QuadShader.Init(QuadVertexSrc, QuadFragSrc);
 		m_QuadShader.SetInt("u_Texture", 0);
-
+ 
 		// Circle
 		glCreateVertexArrays(1, &m_CircleVertexArray);
 		glBindVertexArray(m_CircleVertexArray);
@@ -719,11 +729,6 @@ namespace JSG {
 								  * glm::rotate(glm::mat4(1.0f), glm::radians(m_Player.GetRotation()), glm::vec3(0.0f, 0.0f, 1.0f))
 								  * glm::scale(glm::mat4(1.0f), glm::vec3(m_Player.GetSize()));
 
-			if (Input::IsKeyPressed(GLFW_KEY_M))
-			{
-				ModelMatrix *= glm::inverse(ModelMatrix);
-			}
-
 			m_QuadShader.Bind();
 			m_QuadShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
 			m_QuadShader.SetMat4("u_View", m_Camera.GetViewMatrix());
@@ -795,16 +800,15 @@ namespace JSG {
 		// Render a dot in origo
 		{
 			glm::mat4 projMatrix = glm::ortho(-m_AspectRatio, m_AspectRatio, -1.0f, 1.0f, -1.0f, 1.0f);
-			glm::mat4 viewMatrix = glm::translate(glm::mat4(1), {0.0f, 0.0f, 0.0f});
+			glm::mat4 viewMatrix = glm::translate(glm::mat4(1), {0.0f, 0.0f, -1.0f});
 			viewMatrix = glm::inverse(viewMatrix);
-
-			m_CircleShader.Bind();
-			m_CircleShader.SetMat4("u_Proj", projMatrix);
-			m_CircleShader.SetMat4("u_View", viewMatrix);
 
 			glm::mat4 modelMatrix = glm::translate(glm::mat4(1), { 0.0f, 0.0f, 0.0f }) 
 								  * glm::scale(glm::mat4(1), glm::vec3(0.009f, 0.009f, 0.009f));
 
+			m_CircleShader.Bind();
+			m_CircleShader.SetMat4("u_Proj", projMatrix);
+			m_CircleShader.SetMat4("u_View", viewMatrix);
 			m_CircleShader.SetMat4("u_Model", modelMatrix);
 			m_CircleShader.SetFloat3("u_Color", {1.0f, 1.0f, 1.0f});
 

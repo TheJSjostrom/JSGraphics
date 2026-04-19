@@ -5,6 +5,8 @@
 #include "Events/KeyEvent.h"
 #include "Events/ApplicationEvent.h"
 
+#include "Renderer/Renderer.h"
+
 #include <print>
 #include <iostream>
 #include <memory>
@@ -21,6 +23,8 @@ namespace JSG {
 		s_Instance = this;
 		m_Window.SetEventCallback(HZ_BIND_EVENT_FN(Application::OnEvent));
 		ImGuiUI::Init();
+
+		Renderer::Init();
 	}
 
 	Application::~Application()
