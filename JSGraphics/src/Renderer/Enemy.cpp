@@ -2,52 +2,61 @@
 #include "Core/Input.h"
 
 #include <GLFW/glfw3.h>
+#include <print>
 
 namespace JSG {
 
-	namespace Utils
-	{
-		float CalculatedotAngle(const glm::vec3& v1, const glm::vec3& v2)
+	namespace Utils {
+
+		glm::vec3 CalculateVelocity(const glm::vec3& direction, float speed)
 		{
-			return glm::degrees(glm::acos(glm::clamp(glm::dot(v1, v2), -1.0f, 1.0f)));
+			return direction * speed;
 		}
 
-		Displacement CalculateDisplacement(const glm::vec3& v1, const glm::vec3& v2)
+		float CalculatedotAngle(const glm::vec3& v1, const glm::vec3& v2)
 		{
-			const glm::vec3 displacment = v1 - v2;
-			return { glm::normalize(displacment), glm::length(displacment), glm::degrees(glm::atan(displacment.y, displacment.x)) };
+
+			return glm::degrees(glm::acos(glm::clamp(glm::dot(glm::normalize(v1), glm::normalize(v2)), -1.0f, 1.0f)));
+		}
+
+		glm::vec3 CalculateDisplacement(const glm::vec3& start, const glm::vec3& end)
+		{
+			return end - start;
+		}
+
+		float CalculateAngle(const glm::vec3& displacement)
+		{
+			return glm::degrees(glm::atan(displacement.y, displacement.x));
 		}
 	}
 
 	void Enemy::OnUpdate(float ts, const Player& player)
 	{
+		UpdateAI(player);
+		ExecuteStateAction(ts, player);
+	}
+
+	void Enemy::UpdateAI(const Player& player)
+	{
 		UpdatePerception(player);
 		DetermineEnemyState();
-
-		switch (m_CurrentState)
-		{
-		case EnemyState::Idle:
-			UpdateIdleState(ts); 
-			break;
-		case EnemyState::Chase:
-			HandleChase(ts, player);
-			UpdateColorPulse(ts);
-			break;
-		}
 	}
 
 	void Enemy::UpdatePerception(const Player& player)
 	{
 		const glm::vec3& playerPosition = player.GetPosition();
-		const Displacement displacement = Utils::CalculateDisplacement(playerPosition, m_Position);
-
-		const float dotAngle = Utils::CalculatedotAngle(m_ForwardDirection, displacement.Direction);
-
-		m_Perception.DistanceToTarget = displacement.Length;
-		m_Perception.TargetWorldAngle = displacement.Angle;
-		m_Perception.AngleToTarget = dotAngle;
-	};
+		const glm::vec3 displacement = Utils::CalculateDisplacement(m_Position, playerPosition);
+		const float dotAngle = Utils::CalculatedotAngle(m_ForwardDirection, displacement);
+		SetPerceptionData(displacement, dotAngle);
+	}
 	
+	void Enemy::SetPerceptionData(const glm::vec3& displacement, float dotAngle)
+	{
+		m_Perception.DistanceToTarget = glm::length(displacement);
+		m_Perception.TargetWorldAngle = Utils::CalculateAngle(displacement);
+		m_Perception.AngleToTarget = dotAngle;
+	}
+
 	void Enemy::DetermineEnemyState()
 	{
 		if (IsTargetInFOV())
@@ -57,6 +66,20 @@ namespace JSG {
 		else
 		{
 			m_CurrentState = EnemyState::Idle;
+		}
+	}
+
+	void Enemy::ExecuteStateAction(float ts, const Player& player)
+	{
+		switch (m_CurrentState)
+		{
+		case EnemyState::Idle:
+			UpdateIdleState(ts);
+			break;
+		case EnemyState::Chase:
+			HandleChase(ts, player);
+			UpdateColorPulse(ts);
+			break;
 		}
 	}
 
@@ -86,21 +109,28 @@ namespace JSG {
 		UpdateForwardDirection();
 	}
 
-	void Enemy::UpdateMovement(float ts)
-	{
-		const glm::vec3 velocity = m_ForwardDirection * m_Speed * ts;
-		m_Position += velocity;
-	}
-
 	void Enemy::UpdateForwardDirection()
 	{
-		const glm::vec3 forward = { glm::cos(glm::radians(m_Rotation)), glm::sin(glm::radians(m_Rotation)), 0.0f };
-		m_ForwardDirection = glm::normalize(forward);
+		const glm::vec3 direction = { glm::cos(glm::radians(m_Rotation)), glm::sin(glm::radians(m_Rotation)), 0.0f };
+		m_ForwardDirection = glm::normalize(direction);
+	}
+
+	void Enemy::UpdateMovement(float ts)
+	{
+		const glm::vec3 velocity = Utils::CalculateVelocity(m_ForwardDirection, m_Speed);
+		UpdatePosition(velocity, ts);
+	}
+
+	void Enemy::UpdatePosition(const glm::vec3& velocity, float ts)
+	{
+		m_Position += velocity * ts;
 	}
 
 	void Enemy::UpdateColorPulse(float ts)
 	{
-		m_PulseTimer += 4.0f * ts;
+		const float speed = 4.0f;
+
+		m_PulseTimer += speed * ts;
 		const float colorIntensity = glm::abs(glm::cos(m_PulseTimer));
 		m_Color = { colorIntensity, 0.0f, 0.0f };
 	}

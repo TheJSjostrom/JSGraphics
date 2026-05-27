@@ -11,14 +11,7 @@ namespace JSG {
 		float TargetWorldAngle = 0.0f;
 	};
 
-	struct Displacement
-	{
-		glm::vec3 Direction;
-		float Length;
-		float Angle;
-	};
-
-	enum class EnemyState
+	enum class EnemyState : uint8_t
 	{ 
 		Idle,
 		Chase,
@@ -38,16 +31,21 @@ namespace JSG {
 		bool IsTargetInFOV() const;
 		bool IsCloseToTarget(const Player& player) const;
 	private:
+		void UpdateAI(const Player& player);
 		void UpdatePerception(const Player& player);
+		void SetPerceptionData(const glm::vec3& displacement, float dotAngle);
 		void DetermineEnemyState();
+		void ExecuteStateAction(float ts, const Player& player);
 		void HandleChase(float ts, const Player& player);
+
 		void UpdateOrientation();
 		void UpdateMovement(float ts);
+		void UpdatePosition(const glm::vec3& velocity, float ts);
 		void UpdateForwardDirection();
 		void UpdateColorPulse(float ts);
 		void UpdateIdleState(float ts);
 	private:
-		EnemyState m_CurrentState = EnemyState::Idle;
+		EnemyState m_CurrentState = EnemyState::Chase;
 
 		glm::vec3 m_Position = { -5.0f, 0.0f, 1.0f };
 		glm::vec3 m_ForwardDirection = { 0.0f, 1.0f, 0.0f };

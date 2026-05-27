@@ -9,8 +9,6 @@ namespace JSG {
 		HandleRotation(ts);
 		UpdateForwardDirection();
 		DeterminePlayerState();
-		//UpdateJumpPhysics(ts);
-		// r = v - 2 * dot(v, n) * n
 		
 		switch (m_CurrentState)
 		{
@@ -20,38 +18,12 @@ namespace JSG {
 		case PlayerState::Walk:
 			UpdateWalkState(ts);
 			break;
-		case PlayerState::Run:
+		case PlayerState::Sprint:
 			UpdateRunState(ts); 
 			break;
-		}	
+		}
 
 		HandleMovement(ts);
-	}
-
-	void Player::Jump(float ts)
-	{
-		if (m_IsOnGround) // Only allow jumping if on the ground
-		{
-			m_VerticalVelocity = m_JumpForce; // Apply immediate upward velocity
-			m_IsOnGround = false;             // We are now airborne
-		}
-	}
-
-	void Player::UpdateJumpPhysics(float ts)
-	{
-		// Apply gravity (pulls velocity down over time)
-		m_VerticalVelocity -= m_Gravity * ts;
-
-		// Apply the vertical velocity to the position
-		// Assuming m_Position is a glm::vec3/vec2, you need to apply to the Y axis
-		m_Position.y += m_VerticalVelocity * ts;
-
-		// A very basic "ground collision" check (adjust for your specific game's floor level)
-		if (m_Position.y <= 0.0f) {
-			m_Position.y = 0.0f;        // Restrict position to ground level
-			m_IsOnGround = true;        // Reset the ground flag
-			m_VerticalVelocity = 0.0f;  // Stop vertical movement
-		}
 	}
 
 	void Player::HandleRotation(float ts)
@@ -74,14 +46,11 @@ namespace JSG {
 
 	void Player::DeterminePlayerState()
 	{
-		const bool isWalking = Input::IsKeyPressed(GLFW_KEY_UP) || Input::IsKeyPressed(GLFW_KEY_DOWN);
-		const bool isRunning = (Input::IsKeyPressed(GLFW_KEY_UP) || Input::IsKeyPressed(GLFW_KEY_DOWN)) && Input::IsKeyPressed(GLFW_KEY_LEFT_SHIFT);
-
-		if (isRunning)
+		if (IsSprinting())
 		{
-			m_CurrentState = PlayerState::Run;
+			m_CurrentState = PlayerState::Sprint;
 		}
-		else if (isWalking)
+		else if (IsWalking())
 		{
 			m_CurrentState = PlayerState::Walk;
 		}
@@ -89,6 +58,16 @@ namespace JSG {
 		{
 			m_CurrentState = PlayerState::Idle;
 		}
+	}
+
+	bool Player::IsWalking() const
+	{
+		return Input::IsKeyPressed(GLFW_KEY_UP) || Input::IsKeyPressed(GLFW_KEY_DOWN);
+	}
+
+	bool Player::IsSprinting() const
+	{
+		return IsWalking() && Input::IsKeyPressed(GLFW_KEY_LEFT_SHIFT);
 	}
 
 	void Player::UpdateIdleState(float ts)
@@ -112,12 +91,8 @@ namespace JSG {
 
 	bool Player::IsOutOfBound() const
 	{
-		const bool isOutOfBound = m_Position.x >  25.0f || 
-								  m_Position.x < -25.0f ||
-								  m_Position.y >  26.0f || 
-							      m_Position.y < -25.0f;
-
-		return isOutOfBound;
+		return m_Position.x > 25.0f || m_Position.x < -25.0f ||
+			   m_Position.y > 26.0f || m_Position.y < -25.0f;
 	}
 
 	void Player::UpdateColorPulse(float ts, uint32_t color)

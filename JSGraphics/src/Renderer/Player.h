@@ -7,7 +7,7 @@ namespace JSG {
 	{
 		Idle,
 		Walk,
-		Run
+		Sprint
 	};
 
 	class Player
@@ -15,7 +15,6 @@ namespace JSG {
 	public:
 		void OnUpdate(float ts);
 
-		void Jump(float ts);
 		void UpdateColorPulse(float ts, uint32_t color);
 
 		const glm::vec3& GetForwardDirection() const { return m_ForwardDirection; }
@@ -30,7 +29,8 @@ namespace JSG {
 
 		bool IsOutOfBound() const;
 	private:
-		void UpdateJumpPhysics(float ts);
+		bool IsWalking() const;
+		bool IsSprinting() const;
 		void HandleRotation(float ts);
 		void UpdateForwardDirection();
 		void DeterminePlayerState();
@@ -53,11 +53,6 @@ namespace JSG {
 		float m_HitBox = 1.25f;
 		float m_PulseTimer = 0.0f;
 		float m_PulseSpeed = 0.0f;
-
-		float m_JumpForce = 7.0f;           // How high the initial velocity is
-		float m_Gravity = 15.0f;            // How fast the player is pulled down
-		float m_VerticalVelocity = 0.0f;    // The current upward/downward speed
-		bool m_IsOnGround = true;
 	};
 
 }

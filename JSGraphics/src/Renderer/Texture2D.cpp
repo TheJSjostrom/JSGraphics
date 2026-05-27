@@ -63,7 +63,7 @@ namespace JSG {
 		if (!imageData.IsLoaded())
 		{
 			std::println("Error. Failed to load image at path {}.", path);
-			
+			 
 			return false;
 		}
 

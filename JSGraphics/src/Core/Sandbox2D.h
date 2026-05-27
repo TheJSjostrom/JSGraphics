@@ -9,7 +9,6 @@
 #include "Renderer/Buffer.h"
 #include "Renderer/Camera.h"
 #include "Renderer/Circle.h"
-#include "Renderer/Ball.h"
 #include "Renderer/Enemy.h"
 #include "Renderer/Player.h"
 
@@ -30,15 +29,16 @@ namespace JSG {
 		virtual void OnEvent(Event& e) override;
 
 		virtual void OnImGuiRender() override;
+
 	private:
 		bool OnMouseScrolled(const MouseScrolledEvent& e);
-		bool OnMouseButtonPressed(const MouseButtonPressedEvent& e);
 
-		void CalculateDotProductAngle() const;
 	private:
 		glm::vec3 m_BackgroundColor = { 0.009f, 0.018f, 0.039f };
 
+		// Textures
 		Texture2D m_Texture;
+		Texture2D m_Texture2;
 
 		// Shader Data
 		uint32_t m_TextureQuadVertexArray;
@@ -83,11 +83,7 @@ namespace JSG {
 		// Vector Circles
 		std::vector<Circle> m_Circles;
 		glm::vec3 m_VColor = { 1.0f, 1.0f, 1.0f };
-
 		float m_VCircleSize = 2.0f;
-
-		// Ball
-		std::vector<Ball> m_Balls;
 
 		// Player
 		Player m_Player;
@@ -99,6 +95,7 @@ namespace JSG {
 		glm::vec3 m_LightCubeColor = { 1.0f, 1.0f, 1.0f };
 		glm::vec3 m_LigthCubeDirection = { 0.0f, 0.0f, 0.0f };
 		glm::vec3 m_LightCubePosition = { 1.0f, 5.0f, 0.5f };
+		float m_LightCubeSpeed = 8.0f;
 		float m_LightCubeAngle = 90.0f;
 
 		// Floor

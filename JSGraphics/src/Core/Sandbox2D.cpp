@@ -16,12 +16,27 @@
 
 namespace JSG {
 
+	namespace Utils {
+
+		static glm::vec3 CalculateVelocity(const glm::vec3& direction, float speed)
+		{
+				return direction * speed;
+		}
+	}
+
 	Sandbox2D::Sandbox2D() :
 		m_Camera(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel)
 	{
-		float num = 7.75f;
-		
+		glm::vec3 vektor = { 0.0f, 0.0f, 0.0f };
+		float res = glm::length(vektor);
 
+		std::cout << glm::degrees(glm::atan(vektor.y, vektor.x)) << std::endl;
+		float num = 7.75f;
+		std::unordered_map<int, float> map;
+		map[3] = 1.0f;
+		map[4] = 2.0f;
+
+		map.find(3);
 		std::cout << *(int*)&num << std::endl;
 		std::cout << *(reinterpret_cast<int*>(&num)) << std::endl;
 		int num2 = 1089994752;
@@ -53,9 +68,6 @@ namespace JSG {
 		float c = GLposition.x - GLposition2.x;
 		float z = x - x2;
 
-
-		m_Balls.reserve(20);
-
 		//glEnable(GL_BLEND);
 		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -63,6 +75,9 @@ namespace JSG {
 		glDepthFunc(GL_LESS);
 
 		glDepthMask(GL_TRUE);
+
+		m_Texture.Load("assets/texture/wooden.jpg");
+		m_Texture2.Load("assets/texture/bricket.png");
 
 		//////////////////
 		// Texture Quad //
@@ -129,12 +144,11 @@ namespace JSG {
 		m_TextureQuadShader.Bind();
 
 		m_TextureQuadShader.SetInt("u_Texture", 0);
-		m_Texture.Bind();
-		m_Texture.Load("assets/texture/wooden.jpg");
 		
 		//////////////
 		// Triangle //
 		//////////////
+
 		glCreateVertexArrays(1, &m_TriangleVertexArray);
 		glBindVertexArray(m_TriangleVertexArray);
 
@@ -507,27 +521,28 @@ namespace JSG {
 		///////////////////////////////////
 		///////// LIGHT CUBE //////////////
 		///////////////////////////////////
+
 		m_LigthCubeDirection = { glm::cos(glm::radians(m_LightCubeAngle)), glm::sin(glm::radians(m_LightCubeAngle)), 0.0f };
 		m_LigthCubeDirection = glm::normalize(m_LigthCubeDirection);
 
+		const glm::vec3 LightCubeVelocity = Utils::CalculateVelocity(m_LigthCubeDirection, m_LightCubeSpeed);
+
 		if (Input::IsKeyPressed(GLFW_KEY_T))
 		{
-			m_LightCubePosition.x += m_LigthCubeDirection.x * 8.0f * ts;
-			m_LightCubePosition.y += m_LigthCubeDirection.y * 8.0f * ts;
+			m_LightCubePosition += LightCubeVelocity * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_G))
 		{
-			m_LightCubePosition.x -= m_LigthCubeDirection.x * 8.0f * ts;
-			m_LightCubePosition.y -= m_LigthCubeDirection.y * 8.0f * ts;
+			m_LightCubePosition -= LightCubeVelocity * ts;
 		}
 
 		if (Input::IsKeyPressed(GLFW_KEY_Y))
 		{
-			m_LightCubePosition.z += 8.0f * ts;
+			m_LightCubePosition.z += m_LightCubeSpeed * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_U))
 		{
-			m_LightCubePosition.z -=  8.0f * ts;
+			m_LightCubePosition.z -= m_LightCubeSpeed * ts;
 		}
 
 		m_LightCubePosition.z = glm::max(m_LightCubePosition.z, 0.0f);
@@ -561,18 +576,6 @@ namespace JSG {
 		}
 
 		////////////////////////////////
-		///////////  BALL  ////////////
-		///////////////////////////////
-
-		for (size_t i = 0; i < m_Balls.size(); i++)
-		{
-			m_Balls[i].OnUpdate(ts);
-		}
-
-		// Calculate
-		CalculateDotProductAngle();
-
-		////////////////////////////////
 		/////////// CAMERA /////////////
 		////////////////////////////////
 
@@ -582,25 +585,25 @@ namespace JSG {
 		const glm::vec3 cameraUpDirection = { glm::cos(cameraUpDirectionRotation), glm::sin(cameraUpDirectionRotation), 0.0f };
 		const glm::vec3 cameraRightDirection = glm::normalize(glm::cross(cameraUpDirection, cameraBackDirection));
 		
-		const glm::vec3 cameraUpVelocity = cameraUpDirection * m_CameraSpeed * ts;
-		const glm::vec3 cameraRightVelocity = cameraRightDirection * m_CameraSpeed * ts;
+		const glm::vec3 cameraUpVelocity = Utils::CalculateVelocity(cameraUpDirection, m_CameraSpeed);
+		const glm::vec3 cameraRightVelocity = Utils::CalculateVelocity(cameraRightDirection, m_CameraSpeed);
 
 		if (Input::IsKeyPressed(GLFW_KEY_W))
 		{
-			m_CameraPosition += cameraUpVelocity;
+			m_CameraPosition += cameraUpVelocity * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_S))
 		{
-			m_CameraPosition -= cameraUpVelocity;
+			m_CameraPosition -= cameraUpVelocity * ts;
 		}
 		
 		if (Input::IsKeyPressed(GLFW_KEY_D))
 		{
-			m_CameraPosition += cameraRightVelocity;
+			m_CameraPosition += cameraRightVelocity * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_A))
 		{
-			m_CameraPosition -= cameraRightVelocity;
+			m_CameraPosition -= cameraRightVelocity * ts;
 		}
 
 		if (Input::IsKeyPressed(GLFW_KEY_Q))
@@ -670,6 +673,7 @@ namespace JSG {
 			m_QuadShader.SetFloat3("viewPos", m_Camera.GetPosition());
 
 			m_Texture.Bind();
+
 			glBindVertexArray(m_QuadVertexArray);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
 		}
@@ -702,26 +706,6 @@ namespace JSG {
 			glBindVertexArray(m_TextureQuadVertexArray);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
 		}
-		 
-		// Render Ball
-		{
-			m_BallShader.Bind();
-			m_BallShader.SetMat4("u_Proj", m_Camera.GetProjectionMatrix());
-			m_BallShader.SetMat4("u_View", m_Camera.GetViewMatrix());
-
-
-			for (const Ball& ball : m_Balls)
-			{
-				const glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), ball.GetPosition())
-											* glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
-											* glm::scale(glm::mat4(1.0f), glm::vec3(ball.GetSize()));
-
-				m_BallShader.SetMat4("u_Model", ModelMatrix);
-
-				glBindVertexArray(m_BallVertexArray);
-			//	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
-			}
-		}
 
 		// Render quad player
 		{
@@ -738,6 +722,8 @@ namespace JSG {
 			m_QuadShader.SetFloat3("u_LightColor", m_LightCubeColor);
 			m_QuadShader.SetFloat3("u_ObjectColor", m_Player.GetColor());
 			m_QuadShader.SetFloat3("viewPos", m_Camera.GetPosition());
+
+			m_Texture2.Bind();
 
 			glBindVertexArray(m_QuadVertexArray);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
@@ -758,6 +744,8 @@ namespace JSG {
 			m_QuadShader.SetFloat3("u_LightColor", m_LightCubeColor);
 			m_QuadShader.SetFloat3("u_ObjectColor", m_Enemy.GetColor());
 			m_QuadShader.SetFloat3("viewPos", m_Camera.GetPosition());
+
+			m_Texture.Bind();
 
 			glBindVertexArray(m_QuadVertexArray);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
@@ -915,7 +903,6 @@ namespace JSG {
 	{
 		EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<MouseScrolledEvent>(HZ_BIND_EVENT_FN(Sandbox2D::OnMouseScrolled));
-		dispatcher.Dispatch<MouseButtonPressedEvent>(HZ_BIND_EVENT_FN(Sandbox2D::OnMouseButtonPressed));
 	}
 
 	bool Sandbox2D::OnMouseScrolled(const MouseScrolledEvent& e)
@@ -924,90 +911,6 @@ namespace JSG {
 		m_ZoomLevel = std::max(m_ZoomLevel, 0.50f);
 		
 		return false;
-	}
-
-	bool Sandbox2D::OnMouseButtonPressed(const MouseButtonPressedEvent& e)
-	{
-		// Assume you have access to your window width/height, view matrix, and projection matrix
-		int windowWidth = Application::Get()->GetWindow().GetWidth();  // Replace with your actual window width variable
-		int windowHeight = Application::Get()->GetWindow().GetHeight(); // Replace with your actual window height variable
-
-		// Get mouse position (assuming you store it as member variables or get it via function)
-		double mouseX = Input::GetMousePositionX(); // Example of how you might get the current mouse X
-		double mouseY = Input::GetMousePositionY(); // Example of how you might get the current mouse Y
-
-		// Define the screen position vector
-		// OpenGL expects the Y origin to be bottom-left, but GLFW reports Y from top-left.
-		// So we must flip the Y coordinate:
-		glm::vec3 winCoords(mouseX, windowHeight - mouseY, 0.0f); // Z is 0 for the near plane
-
-		// Define the viewport
-		glm::vec4 viewport(0.0f, 0.0f, (float)windowWidth, (float)windowHeight);
-
-		// Get your current matrices (replace with actual calls to your camera/renderer class)
-		glm::mat4 viewMatrix = m_Camera.GetViewMatrix();
-		glm::mat4 projectionMatrix = m_Camera.GetProjectionMatrix();
-
-		// Unproject the coordinates
-		glm::vec3 worldPosition = glm::unProject(
-			winCoords,
-			viewMatrix,
-			projectionMatrix,
-			viewport
-		);
-
-		// Now use the calculated worldPosition for your ball
-		// Note: If you are working in a 2D environment, you might need to adjust the Z coordinate 
-		// of the resulting worldPosition to match your game plane (e.g., set worldPosition.z = 0.0f).
-		m_Balls.emplace_back(worldPosition, glm::vec3(1.0f, 0.0f, 0.0f), 1.0f);
-		return false;
-		
-	//	if (GLFW_MOUSE_BUTTON_2 == e.GetMouseButton() && m_Circles.size() <= 20)
-	//		m_Balls.emplace_back(m_Camera.GetPosition(), glm::vec3(1.0f, 0.0f, 0.0f), 1.0f);
-	
-	//	return false;
-	}
-
-	void Sandbox2D::CalculateDotProductAngle() const
-	{
-		const glm::vec3& playerPosition = m_Player.GetPosition();
-		const glm::vec3& enemyPosition = m_Enemy.GetPosition();
-
-		const glm::vec3 displacment = enemyPosition - playerPosition;
-		// Geometric interpretation - Algebraic interpretation
-		//         Scalar Projection
-		//        |              | cos(180) = -2/2
-		// A . B = A.x * B.x + A.y * B.y = ||A|| * ||B|| * cos(θ) <- Dot Product
-		const float dotProduct = glm::dot(playerPosition, enemyPosition);
-		
-	
-		/*
-		DISTANCE FORMULA
-		d = sqrt((x2-x1)^2 + (y2-y1)^2)
-
-		d^2 = (cos(A) - cos(B))^2 + (sin(A) - sin(B))^2
-		cos(A)^2 - 2cos(A)*cos(B) + cos(B)^2 + sin(A)^2 - 2sin(A)sin(B) + sin(B)^2
-		cos(A)^2 + sin(A)^2 + cos(B)^2 + sin(B)^2  - 2cos(A)*cos(B) - 2sin(A)sin(B)
-		1 + 1  - 2cos(A)*cos(B) - 2sin(A)sin(B)
-		2 - 2cos(A)*cos(B) - 2sin(A)sin(B)
-		
-		simplified:
-		d^2 = 2 - 2(cos(A)*cos(B) + sin(A)sin(B))
-
-		LAW OF COSINES
-		a^2 = b^2 + c^2 - 2bc*cos(theta)
-
-		a^2 = 1^2 + 1^2 - 2*1*1*cos(theta)
-		1 + 1 - 2*cos(theta)
-
-		simplified:
-		2 - 2cos(theta)
-
-
-		Result
-		2 - 2cos(theta) = 2 - 2(cos(A)*cos(B) + sin(A)sin(B))
-		cos(theta) = cos(A)cos(B) + sin(A)sin(B)
-		*/
 	}
 
 }
