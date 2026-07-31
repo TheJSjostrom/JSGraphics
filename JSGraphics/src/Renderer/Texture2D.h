@@ -31,6 +31,10 @@ namespace JSG {
 
 		void Bind(uint32_t slot = 0) const;
 		bool Load(const std::string& path);
+
+		uint32_t GetWidth() const { return m_Spec.Width; }
+		uint32_t GetHeight() const { return m_Spec.Height; }
+		uint32_t GetTextureID() const { return m_TextureID; }
 	private:
 		uint32_t m_TextureID = 0;
 

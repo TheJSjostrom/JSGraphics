@@ -37,7 +37,6 @@ namespace JSG {
 		void UpdateIdleState(float ts);
 		void UpdateWalkState(float ts);
 		void UpdateRunState(float ts);
-		glm::vec3 CalculateVelocity(float ts) const;
 		void HandleMovement(float ts);
 	private:
 		PlayerState m_CurrentState = PlayerState::Idle;
@@ -45,7 +44,7 @@ namespace JSG {
 		glm::vec3 m_Position = { 11.0f, 2.0f, 1.0f };
 		glm::vec3 m_Color = { 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_ForwardDirection = { 0.0f, 0.0f, 0.0f };
-
+		
 		float m_RotationSpeed = 180.0f;
 		float m_Speed = 4.0f;
 		float m_Size = 1.0f;

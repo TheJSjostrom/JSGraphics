@@ -9,12 +9,26 @@
  
 #include "glad/glad.h"
 
+#include "Renderer/RenderCommand.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include <algorithm>
 #include <print>
 #include <iostream>
 
 namespace JSG {
+
+	void Printbinary(char n) {
+		printf("%4d: ", n);
+
+		for (int i = 7; i >= 0; i--) {
+			int k = ((unsigned char)n) >> i;
+			if (k & 1)
+				printf("1");
+			else
+				printf("0");
+		}
+		printf("\n");
+	}
 
 	namespace Utils {
 
@@ -27,46 +41,12 @@ namespace JSG {
 	Sandbox2D::Sandbox2D() :
 		m_Camera(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel)
 	{
-		glm::vec3 vektor = { 0.0f, 0.0f, 0.0f };
-		float res = glm::length(vektor);
+		// Byte 1     Byte 2      Byte 3     Byte 4
+		// [00000010] [00000000] [00000000] [00000000] - Bitmönstret.
+		// [00000000] [00000000] [00000001] [00000001]
+	
+		std::unique_ptr<Enemy> ptr = std::make_unique<Enemy>();
 
-		std::cout << glm::degrees(glm::atan(vektor.y, vektor.x)) << std::endl;
-		float num = 7.75f;
-		std::unordered_map<int, float> map;
-		map[3] = 1.0f;
-		map[4] = 2.0f;
-
-		map.find(3);
-		std::cout << *(int*)&num << std::endl;
-		std::cout << *(reinterpret_cast<int*>(&num)) << std::endl;
-		int num2 = 1089994752;
-		std::cout << std::bit_cast<float>(num2) << std::endl;
- 
-		std::cout << *(reinterpret_cast<float*>(&num2)) << std::endl;
-
-		const float zoomLevel = 1.0f;
-		const float width = 1000.0f;
-		const float height = 500.0f;
-		const float aspectRatio = width / height;
-		
-		glm::mat4 orthoProj = glm::ortho(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel, -1.0f, 1.0f);
-		glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), { 0.25f, 0.0f, 0.0f });
-
-		// The first vertex position
-		const glm::vec3 position = { 0.5f, 0.5f, 0.0f };
-		const glm::vec4 GLposition = orthoProj * modelMatrix * glm::vec4(position, 1.0f);
-		// position in Window Space.
-		const float x = (GLposition.x + 1) * (width / 2.0f);
-		const float y = (GLposition.y + 1) * (height / 2.0f);
-
-		// The second vertex position
-		const glm::vec3 position2 = { -0.5f, 0.5f, 0.0f };
-		const glm::vec4 GLposition2 = orthoProj * modelMatrix * glm::vec4(position2, 1.0f);
-		// position in Window Space.
-		const float x2 = (GLposition2.x + 1) * (width / 2.0f);
-		const float y2 = (GLposition2.y + 1) * (height / 2.0f);
-		float c = GLposition.x - GLposition2.x;
-		float z = x - x2;
 
 		//glEnable(GL_BLEND);
 		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -93,7 +73,7 @@ namespace JSG {
 			 0.5f, 0.5f, 0.0f,  0.0f, 0.0f, // Vertex Index 2
 			-0.5f, 0.5f, 0.0f,  0.0f, 1.0f  // Vertex Index 3
 		};
-
+		
 		m_TextureQuadVertexBuffer.Init(sizeof(TextureQuadVertices), TextureQuadVertices);
 		m_TextureQuadVertexBuffer.Bind();
 
@@ -136,7 +116,8 @@ namespace JSG {
 
 			void main()
 			{
-				color = texture(u_Texture, TextureCoord);
+				vec4 textureColor = texture(u_Texture, TextureCoord);
+				color = vec4(1.0 - textureColor.r, 1.0 - textureColor.g, 1.0 - textureColor.b, 1.0);
 			}
 		)";
 
@@ -245,7 +226,8 @@ namespace JSG {
 		const std::string BallVertexSrc = R"(
 			#version 330 core
 			
-			layout(location = 0) in vec3 a_Position;
+			layout(location = 0) in vec3 a_Position; 
+
 			layout(location = 1) in vec3 a_LocalPosition;
 			
 			uniform mat4 u_Proj;
@@ -508,11 +490,8 @@ namespace JSG {
 	{
 		Application& app = *Application::Get();
 		m_AspectRatio = app.GetWindow().GetWidth() / static_cast<float>(app.GetWindow().GetHeight());
-
-		int x = 256; // [00000000] [00000001] [00000000] [00000000] 
-		char* y = (char*)&x + 0;
-		char t = *y;
-		int p = *(int*)y;
+		num += 1;
+		Printbinary(num);
 		
 		// Player
 		//glm::vec3 PlayerUpDirection = { 0.0f, 0.0f, 1.0f };
@@ -606,13 +585,15 @@ namespace JSG {
 			m_CameraPosition -= cameraRightVelocity * ts;
 		}
 
+		const float rotationSpeed = 180.0f;
+
 		if (Input::IsKeyPressed(GLFW_KEY_Q))
 		{
-			m_CameraRotation += 180.0f * ts;
+			m_CameraRotation += rotationSpeed * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_E))
 		{
-			m_CameraRotation -= 180.0f * ts;
+			m_CameraRotation -= rotationSpeed * ts;
 		}
 
 		///////////////////////////////////////
@@ -639,12 +620,10 @@ namespace JSG {
 
 	void Sandbox2D::OnRender() 
 	{
-		// Clear Color buffer with m_BackgroundColor color and depth buffer with 1.0f.
-		glClearColor(m_BackgroundColor.r, m_BackgroundColor.g, m_BackgroundColor.b, 1.0f);
-		glClearDepth(1.0f);
+		JSG::RenderCommand::SetClearColor(m_BackgroundColor);
+		JSG::RenderCommand::SetClearDepth(1.0f);
 		
-		// Clearing
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		JSG::RenderCommand::Clear();
 
 		// Camera setup.
 		m_Camera.SetProjectionMatrix(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
@@ -856,12 +835,21 @@ namespace JSG {
 		ImGui::Text("Window Aspect Ratio: %f", m_AspectRatio);
 		ImGui::End();
 
+		//Texture Image
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+		ImGui::Begin("Viewport");
+		ImVec2 vec = ImGui::GetContentRegionAvail();
+		ImGui::Image((ImTextureID)(intptr_t)m_Texture.GetTextureID(), ImVec2(vec.x, vec.y));
+		ImGui::PopStyleVar();
+		ImGui::End();
+
 		////////////////////////////////////
 		/////////// EDIT TOOL /////////////
 		//////////////////////////////////
+
 		ImGui::Begin("Edit Tool");
-		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "COLOR");
-		ImGui::ColorEdit4("Background Color", reinterpret_cast<float*>(&m_BackgroundColor));
+		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "BACKGROUND COLOR");
+		ImGui::ColorEdit4("COLOR", reinterpret_cast<float*>(&m_BackgroundColor));
 
 		ImGui::Text("");
 
@@ -871,25 +859,7 @@ namespace JSG {
 
 		if (ImGui::Button("Set camera position to { 0.0, 0.0, 0.0 }"))
 			m_CameraPosition = { 0.0f, 0.0f, 0.0f };
-
-		ImGui::SliderFloat("Size", &m_VCircleSize, 0.1f, 10.0f);
-		ImGui::ColorEdit4("VCircle Color", reinterpret_cast<float*>(&m_VColor));
-	    ImGui::Text("Number of circles: %d", static_cast<int>(m_Circles.size()));
-		if (ImGui::Button("Clear Circles."))
-		{
-			m_Circles.clear();
-		}
 		ImGui::Text("");
-		
-		// Floor Settings 
-		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Floor Settings");
-		ImGui::ColorEdit4("Floor Color", reinterpret_cast<float*>(&m_FloorColor));
-		ImGui::Text(" ");
-
-		// Player Settings
-		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Player Settings");
-		ImGui::ColorEdit4("Player Color", reinterpret_cast<float*>(&m_Player.GetColor()));
-		ImGui::Text(" ");
 
 		// Light Cube Settings
 		ImGui::TextColored(ImVec4(0.941f, 1.0f, 0.0f, 1.0f), "Light Cube Settings");

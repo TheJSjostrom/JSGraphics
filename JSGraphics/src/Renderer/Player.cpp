@@ -4,6 +4,20 @@
 
 namespace JSG {
 
+	namespace Utils {
+
+		static glm::vec3 CalculateVelocity(const glm::vec3& direction, float speed)
+		{
+			return direction * speed;
+		}
+
+		static glm::vec3 CalculateDirection(float rotation)
+		{
+			return glm::normalize(glm::vec3(glm::cos(glm::radians(rotation)), glm::sin(glm::radians(rotation)), 0.0f ));
+		}
+
+	}
+
 	void Player::OnUpdate(float ts)
 	{
 		HandleRotation(ts);
@@ -40,8 +54,8 @@ namespace JSG {
 
 	void Player::UpdateForwardDirection()
 	{
-		const glm::vec3 forward = { glm::cos(glm::radians(m_Rotation)), glm::sin(glm::radians(m_Rotation)), 0.0f };
-		m_ForwardDirection = glm::normalize(forward);
+		const glm::vec3 direction = Utils::CalculateDirection(m_Rotation);
+		m_ForwardDirection = direction;
 	}
 
 	void Player::DeterminePlayerState()
@@ -111,22 +125,17 @@ namespace JSG {
 		}
 	}
 
-	glm::vec3 Player::CalculateVelocity(float ts) const
-	{
-		return m_ForwardDirection * m_Speed * ts;
-	}
-
 	void Player::HandleMovement(float ts)
 	{
-		const glm::vec3 velocity = CalculateVelocity(ts);
+		const glm::vec3 velocity = Utils::CalculateVelocity(m_ForwardDirection, m_Speed);
 
 		if (Input::IsKeyPressed(GLFW_KEY_UP))
 		{
-			m_Position += velocity;
+			m_Position += velocity * ts;
 		}
 		else if (Input::IsKeyPressed(GLFW_KEY_DOWN))
 		{
-			m_Position -= velocity;
+			m_Position -= velocity * ts;
 		}
 	}
 }

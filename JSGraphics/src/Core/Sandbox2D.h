@@ -34,8 +34,8 @@ namespace JSG {
 		bool OnMouseScrolled(const MouseScrolledEvent& e);
 
 	private:
-		glm::vec3 m_BackgroundColor = { 0.009f, 0.018f, 0.039f };
-
+		glm::vec4 m_BackgroundColor = { 0.009f, 0.018f, 0.039f, 1.0f };
+		int num = 1;
 		// Textures
 		Texture2D m_Texture;
 		Texture2D m_Texture2;
@@ -73,7 +73,7 @@ namespace JSG {
 
 		// Camera
 		Camera m_Camera;
-		float m_ZoomLevel = 1.0f;
+		float m_ZoomLevel = 8.0f;
 		float m_AspectRatio = 0.0f;
 
 		glm::vec3 m_CameraPosition = { 0.0f, 0.0f, 0.0f };

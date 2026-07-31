@@ -8,26 +8,31 @@ namespace JSG {
 
 	namespace Utils {
 
-		glm::vec3 CalculateVelocity(const glm::vec3& direction, float speed)
+		static glm::vec3 CalculateVelocity(const glm::vec3& direction, float speed)
 		{
 			return direction * speed;
 		}
 
-		float CalculatedotAngle(const glm::vec3& v1, const glm::vec3& v2)
+		static float CalculatedotAngle(const glm::vec3& v1, const glm::vec3& v2)
 		{
-
 			return glm::degrees(glm::acos(glm::clamp(glm::dot(glm::normalize(v1), glm::normalize(v2)), -1.0f, 1.0f)));
 		}
 
-		glm::vec3 CalculateDisplacement(const glm::vec3& start, const glm::vec3& end)
+		static glm::vec3 CalculateDisplacement(const glm::vec3& start, const glm::vec3& end)
 		{
 			return end - start;
 		}
 
-		float CalculateAngle(const glm::vec3& displacement)
+		static float CalculateAngle(const glm::vec3& displacement)
 		{
 			return glm::degrees(glm::atan(displacement.y, displacement.x));
 		}
+
+		static glm::vec3 CalculateDirection(float rotation)
+		{
+			return glm::normalize(glm::vec3(glm::cos(glm::radians(rotation)), glm::sin(glm::radians(rotation)), 0.0f ));
+		}
+
 	}
 
 	void Enemy::OnUpdate(float ts, const Player& player)
@@ -106,23 +111,24 @@ namespace JSG {
 	void Enemy::UpdateOrientation()
 	{
 		m_Rotation = m_Perception.TargetWorldAngle;
-		UpdateForwardDirection();
+
+		const glm::vec3 direction = Utils::CalculateDirection(m_Rotation);
+		SetForwardDirection(direction);
 	}
 
-	void Enemy::UpdateForwardDirection()
+	void Enemy::SetForwardDirection(const glm::vec3& direction)
 	{
-		const glm::vec3 direction = { glm::cos(glm::radians(m_Rotation)), glm::sin(glm::radians(m_Rotation)), 0.0f };
-		m_ForwardDirection = glm::normalize(direction);
+		m_ForwardDirection = direction;
 	}
 
 	void Enemy::UpdateMovement(float ts)
 	{
-		const glm::vec3 velocity = Utils::CalculateVelocity(m_ForwardDirection, m_Speed);
-		UpdatePosition(velocity, ts);
+		UpdatePosition(ts);
 	}
-
-	void Enemy::UpdatePosition(const glm::vec3& velocity, float ts)
+	
+	void Enemy::UpdatePosition(float ts)
 	{
+		const glm::vec3 velocity = Utils::CalculateVelocity(m_ForwardDirection, m_Speed);
 		m_Position += velocity * ts;
 	}
 
